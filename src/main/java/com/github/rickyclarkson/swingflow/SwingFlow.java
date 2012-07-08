@@ -33,11 +33,6 @@ public class SwingFlow {
                 super(new MigLayout());
             }
 
-            public Dimension getPreferredSize() {
-                Thread.dumpStack();
-                return super.getPreferredSize();
-            }
-
             @Override
             public Dimension getPreferredScrollableViewportSize() {
                 return getPreferredSize();
@@ -113,14 +108,14 @@ public class SwingFlow {
                         final int slept = (int) ((System.currentTimeMillis() - startTimeMillis.t) / 1000);
                         final int remaining = seconds - slept;
                         if (remaining <= 0)
-                            return _Success("Slept for " + seconds + " seconds", "");
+                            return _Success("Slept for " + seconds + " seconds", Option.<String>_None());
 
-                        return _InProgress(_Seconds(remaining), "Slept for " + seconds + "; " + remaining + " to go", "");
+                        return _InProgress(_Seconds(remaining), "Slept for " + seconds + "; " + remaining + " to go", Option.<String>_None());
                     }
 
                     @Override
                     public StageProgress _case(Option.None<Long> x) {
-                        return _InProgress(_Seconds(seconds), "Sleep for " + seconds, "");
+                        return _InProgress(_Seconds(seconds), "Sleep for " + seconds, Option.<String>_None());
                     }
                 });
             }

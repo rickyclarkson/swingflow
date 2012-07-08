@@ -1,9 +1,9 @@
 package com.github.rickyclarkson.swingflow
 
 StageProgress =
-  Success(String brief, String detailed)
- |InProgress(Seconds remaining, String brief, String detailed)
- |Failed(String brief, String detailed)
+  Success(String brief, Option<String> detailed)
+ |InProgress(Seconds remaining, String brief, Option<String> detailed)
+ |Failed(String brief, Option<String> detailed)
 
 Seconds = Seconds(int seconds)
 
