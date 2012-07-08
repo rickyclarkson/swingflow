@@ -6,11 +6,8 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import java.awt.Dimension;
-import java.awt.Rectangle;
 
 import static com.github.rickyclarkson.swingflow.Fraction._Fraction;
 import static com.github.rickyclarkson.swingflow.Option._None;
@@ -28,38 +25,8 @@ public class SwingFlow {
     public JComponent view(int updateEveryXMilliseconds) {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
-        class Panel extends JPanel implements Scrollable {
-            Panel() {
-                super(new MigLayout());
-            }
 
-            @Override
-            public Dimension getPreferredScrollableViewportSize() {
-                return getPreferredSize();
-            }
-
-            @Override
-            public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-                return 5;
-            }
-
-            @Override
-            public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-                return 50;
-            }
-
-            @Override
-            public boolean getScrollableTracksViewportWidth() {
-                return false;
-            }
-
-            @Override
-            public boolean getScrollableTracksViewportHeight() {
-                return false;
-            }
-        }
-
-        Panel panel = new Panel();
+        JPanel panel = new JPanel(new MigLayout());
 
         for (Stage stage: stages)
             panel.add(StageView.stageView(stage, updateEveryXMilliseconds));
