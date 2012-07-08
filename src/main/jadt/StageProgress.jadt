@@ -1,12 +1,14 @@
 package com.github.rickyclarkson.swingflow
 
 StageProgress =
-  Success(String brief, Option<String> detailed)
- |InProgress(Seconds remaining, String brief, Option<String> detailed)
- |Failed(String brief, Option<String> detailed)
+  Success(final String brief, final Option<String> detailed)
+ |InProgress(final Fraction complete, final String brief, final Option<String> detailed)
+ |Failed(final String brief, final Option<String> detailed)
 
-Seconds = Seconds(int seconds)
+Fraction = Fraction(final int numerator, final int denominator)
 
 Option<T> =
-  Some(T t)
+  Some(final T t)
  |None
+
+ProgressBriefAndDetailed = ProgressBriefAndDetailed(final Fraction complete, final String brief, final Option<String> detailed)

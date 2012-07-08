@@ -4,5 +4,4 @@ public interface Stage {
     StageProgress progress();
     void start();
     String name();
-    Seconds originalEstimate();
 }

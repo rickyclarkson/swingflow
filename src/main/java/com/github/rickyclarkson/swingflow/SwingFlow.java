@@ -12,8 +12,8 @@ import javax.swing.SwingWorker;
 import java.awt.Dimension;
 import java.awt.Rectangle;
 
+import static com.github.rickyclarkson.swingflow.Fraction._Fraction;
 import static com.github.rickyclarkson.swingflow.Option._None;
-import static com.github.rickyclarkson.swingflow.Seconds._Seconds;
 import static com.github.rickyclarkson.swingflow.StageProgress._InProgress;
 import static com.github.rickyclarkson.swingflow.StageProgress._Success;
 
@@ -59,14 +59,10 @@ public class SwingFlow {
             }
         }
 
-        int totalSeconds = 0;
-        for (Stage stage: stages)
-            totalSeconds += stage.originalEstimate().seconds;
-
         Panel panel = new Panel();
 
         for (Stage stage: stages)
-            panel.add(StageView.stageView(stage, updateEveryXMilliseconds), "width " + stage.originalEstimate().seconds * 100 / totalSeconds + "%");
+            panel.add(StageView.stageView(stage, updateEveryXMilliseconds));
 
         panel.setPreferredSize(panel.getPreferredSize());
         return new JScrollPane(panel);
@@ -110,12 +106,12 @@ public class SwingFlow {
                         if (remaining <= 0)
                             return _Success("Slept for " + seconds + " seconds", Option.<String>_None());
 
-                        return _InProgress(_Seconds(remaining), "Slept for " + seconds + "; " + remaining + " to go", Option.<String>_None());
+                        return _InProgress(_Fraction(slept, seconds), "Slept for " + slept + "; " + remaining + " to go", Option.<String>_None());
                     }
 
                     @Override
                     public StageProgress _case(Option.None<Long> x) {
-                        return _InProgress(_Seconds(seconds), "Sleep for " + seconds, Option.<String>_None());
+                        return _InProgress(_Fraction(0, seconds), "Sleep for " + seconds, Option._Some("In the middle of a deep, deep " + seconds + " second sleep."));
                     }
                 });
             }
@@ -133,11 +129,6 @@ public class SwingFlow {
             @Override
             public String name() {
                 return "Sleep for " + seconds + " seconds";
-            }
-
-            @Override
-            public Seconds originalEstimate() {
-                return _Seconds(seconds);
             }
         };
     }
