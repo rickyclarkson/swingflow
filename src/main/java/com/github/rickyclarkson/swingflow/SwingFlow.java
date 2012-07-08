@@ -1,20 +1,21 @@
 package com.github.rickyclarkson.swingflow;
 
-import fj.F;
-import fj.P2;
-import fj.data.Option;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.Scrollable;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import java.util.HashMap;
-import java.util.Map;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 
-import static fj.P.p;
+import static com.github.rickyclarkson.swingflow.Option._None;
+import static com.github.rickyclarkson.swingflow.Seconds._Seconds;
+import static com.github.rickyclarkson.swingflow.StageProgress._InProgress;
+import static com.github.rickyclarkson.swingflow.StageProgress._Success;
 
 public class SwingFlow {
     private final Stage[] stages;
@@ -27,20 +28,52 @@ public class SwingFlow {
     public JComponent view(int updateEveryXMilliseconds) {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
-        JPanel panel = new JPanel(new MigLayout());
-        int secondsLeft = 0;
-        Map<Stage, Integer> proportions = new HashMap<Stage, Integer>();
-        for (Stage stage: stages) {
-            final int estimate = stage.estimateSecondsLeft();
-            proportions.put(stage, estimate);
-            secondsLeft += estimate;
+        class Panel extends JPanel implements Scrollable {
+            Panel() {
+                super(new MigLayout());
+            }
+
+            public Dimension getPreferredSize() {
+                Thread.dumpStack();
+                return super.getPreferredSize();
+            }
+
+            @Override
+            public Dimension getPreferredScrollableViewportSize() {
+                return getPreferredSize();
+            }
+
+            @Override
+            public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+                return 5;
+            }
+
+            @Override
+            public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+                return 50;
+            }
+
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return false;
+            }
+
+            @Override
+            public boolean getScrollableTracksViewportHeight() {
+                return false;
+            }
         }
 
-        for (Stage stage: stages) {
-            final Integer originalEstimate = proportions.get(stage);
-            panel.add(StageView.stageView(stage, originalEstimate, updateEveryXMilliseconds), "width " + originalEstimate * 100 / secondsLeft + "%");
-        }
+        int totalSeconds = 0;
+        for (Stage stage: stages)
+            totalSeconds += stage.originalEstimate().seconds;
 
+        Panel panel = new Panel();
+
+        for (Stage stage: stages)
+            panel.add(StageView.stageView(stage, updateEveryXMilliseconds), "width " + stage.originalEstimate().seconds * 100 / totalSeconds + "%");
+
+        panel.setPreferredSize(panel.getPreferredSize());
         return new JScrollPane(panel);
     }
 
@@ -55,8 +88,7 @@ public class SwingFlow {
 
     @EDT
     private static void realMain() {
-        SwingFlow flow = new SwingFlow(sleep(1), sleep(2), sleep(4));
-        flow.view(500);
+        SwingFlow flow = new SwingFlow(sleep(1), sleep(2), sleep(4), sleep(8));
         JFrame frame = new JFrame();
         frame.add(flow.view(500));
         frame.setVisible(true);
@@ -71,31 +103,31 @@ public class SwingFlow {
 
     private static Stage sleep(final int seconds) {
         return new Stage() {
-            private Option<Long> startTime = Option.none();
+            private Option<Long> startTimeMillis = _None();
 
             @Override
-            public int estimateSecondsLeft() {
-                return startTime.option(seconds, new F<Long, Integer>() {
+            public StageProgress progress() {
+                return startTimeMillis.match(new Option.MatchBlock<Long, StageProgress>() {
                     @Override
-                    public Integer f(Long startTime) {
-                        return seconds - (int)((System.currentTimeMillis() - startTime) / 1000);
+                    public StageProgress _case(Option.Some<Long> startTimeMillis) {
+                        final int slept = (int) ((System.currentTimeMillis() - startTimeMillis.t) / 1000);
+                        final int remaining = seconds - slept;
+                        if (remaining <= 0)
+                            return _Success("Slept for " + seconds + " seconds", "");
+
+                        return _InProgress(_Seconds(remaining), "Slept for " + seconds + "; " + remaining + " to go", "");
                     }
-                });
-            }
 
-            @Override
-            public P2<String, String> briefAndDetailedStatuses() {
-                return startTime.option(p("Sleep for " + seconds + " seconds.", ""), new F<Long, P2<String, String>>() {
                     @Override
-                    public P2<String, String> f(Long startTime) {
-                        return p(seconds - (int)((System.currentTimeMillis() - startTime) / 1000) + " seconds of sleep remaining.", "");
+                    public StageProgress _case(Option.None<Long> x) {
+                        return _InProgress(_Seconds(seconds), "Sleep for " + seconds, "");
                     }
                 });
             }
 
             @Override
             public void start() {
-                startTime = Option.some(System.currentTimeMillis());
+                startTimeMillis = Option._Some(System.currentTimeMillis());
                 try {
                     Thread.sleep(seconds * 1000L);
                 } catch (InterruptedException ignored) {
@@ -104,8 +136,13 @@ public class SwingFlow {
             }
 
             @Override
-            public String title() {
+            public String name() {
                 return "Sleep for " + seconds + " seconds";
+            }
+
+            @Override
+            public Seconds originalEstimate() {
+                return _Seconds(seconds);
             }
         };
     }

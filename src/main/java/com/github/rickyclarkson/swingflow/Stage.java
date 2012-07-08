@@ -1,10 +1,8 @@
 package com.github.rickyclarkson.swingflow;
 
-import fj.P2;
-
 public interface Stage {
-    int estimateSecondsLeft();
-    P2<String, String> briefAndDetailedStatuses();
+    StageProgress progress();
     void start();
-    String title();
+    String name();
+    Seconds originalEstimate();
 }

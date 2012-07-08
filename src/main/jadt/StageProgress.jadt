@@ -1,0 +1,12 @@
+package com.github.rickyclarkson.swingflow
+
+StageProgress =
+  Success(String brief, String detailed)
+ |InProgress(Seconds remaining, String brief, String detailed)
+ |Failed(String brief, String detailed)
+
+Seconds = Seconds(int seconds)
+
+Option<T> =
+  Some(T t)
+ |None
