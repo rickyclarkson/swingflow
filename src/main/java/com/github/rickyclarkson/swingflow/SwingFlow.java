@@ -90,7 +90,6 @@ public class SwingFlow {
                     Thread.sleep(seconds * 1000L);
                 } catch (InterruptedException ignored) {
                 }
-                System.out.println("Slept for " + seconds + " seconds.");
             }
 
             @Override
