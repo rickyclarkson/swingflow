@@ -12,8 +12,8 @@ import static com.github.rickyclarkson.swingflow.ProgressBriefAndDetailed._Progr
 public class StageView extends VerticalPanel {
     private final Timer timer;
 
-    private StageView(Stage stage, JProgressBar bar, Timer timer) {
-        super(new JLabel(stage.name()), bar);
+    private StageView(Stage stage, JProgressBar bar, DetailsButton details, Timer timer) {
+        super(new JLabel(stage.name()), bar, details);
         this.timer = timer;
     }
 
@@ -21,6 +21,7 @@ public class StageView extends VerticalPanel {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
+        final DetailsButton details = new DetailsButton();
 
         Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
@@ -44,24 +45,13 @@ public class StageView extends VerticalPanel {
 
                 bar.setValue(result.complete.numerator * 100 / result.complete.denominator);
                 bar.setString(result.brief);
-                bar.setToolTipText(result.detailed.match(new Option.MatchBlock<String, String>() {
-                    @Override
-                    public String _case(Option.Some<String> x) {
-                        return x.t;
-                    }
-
-                    @Override
-                    public String _case(Option.None<String> x) {
-                        return "";
-                    }
-                }));
-
+                details.setDetails(result.detailed);
             }
         });
 
         timer.start();
 
-        return new StageView(stage, bar, timer);
+        return new StageView(stage, bar, details, timer);
     }
 
     public void removeNotify() {
