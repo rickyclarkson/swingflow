@@ -33,8 +33,8 @@ public class DetailsButton extends JButton {
         addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JTextArea someTextArea = popup.some();
-                 JWindow window = new JWindow();
+                final JTextArea someTextArea = popup.some();
+                final JWindow window = new JWindow();
 
                 final Border border = BorderFactory.createLineBorder(Color.black);
                 someTextArea.setBorder(border);
@@ -47,16 +47,16 @@ public class DetailsButton extends JButton {
                 window.pack();
                 someTextArea.setFocusable(true);
                 someTextArea.setEditable(true);
-                Rectangle bounds = window.getGraphicsConfiguration().getBounds();
-                int x = getLocationOnScreen().x;
-                int y = getLocationOnScreen().y + getSize().height;
-                int right = x + window.getWidth();
-                int bottom = y + window.getHeight();
+                final Rectangle bounds = window.getGraphicsConfiguration().getBounds();
+                final int x = getLocationOnScreen().x;
+                final int y = getLocationOnScreen().y + getSize().height;
+                final int right = x + window.getWidth();
+                final int bottom = y + window.getHeight();
 
                 if (right <= bounds.getX() + bounds.getWidth() && bottom <= bounds.getY() + bounds.getHeight())
                     window.setLocation(x, y);
                 else {
-                    int top = getLocationOnScreen().y - getSize().height;
+                    final int top = getLocationOnScreen().y - getSize().height;
                     if (right <= bounds.getX() + bounds.getWidth() && top >= bounds.getY())
                         window.setLocation(x, top);
                     else
@@ -72,7 +72,7 @@ public class DetailsButton extends JButton {
         return new JPanel(layout) {
             public void paintComponent(Graphics graphics) {
                 super.paintComponent(graphics);
-                Graphics2D g2d = (Graphics2D)graphics.create();
+                final Graphics2D g2d = (Graphics2D)graphics.create();
                 g2d.setPaint(new GradientPaint(0, 0, averageColor(Color.gray, Color.cyan), 0, getHeight(), Color.white));
                 g2d.fillRect(0, 0, getWidth(), getHeight());
                 g2d.dispose();
@@ -80,11 +80,11 @@ public class DetailsButton extends JButton {
         };
     }
 
-    private Color averageColor(Color one, Color two) {
+    private static Color averageColor(Color one, Color two) {
         return new Color((one.getRed() + two.getRed()) / 2, (one.getGreen() + two.getGreen()) / 2, (one.getBlue() + two.getBlue()) / 2);
     }
 
-    private JComponent closeButton(final ActionListener listener) {
+    private static JComponent closeButton(final ActionListener listener) {
         final JLabel button = new JLabel(" X ");
         button.addMouseListener(new MouseAdapter() {
             @Override
@@ -99,7 +99,7 @@ public class DetailsButton extends JButton {
     public void setDetails(final Option<String> details) {
         EDT.Assert.onEdt();
         if (popup.isSome()) {
-            JTextArea someTextArea = popup.some();
+            final JTextArea someTextArea = popup.some();
             if (details.isSome())
                 someTextArea.setText(details.some());
             else {
