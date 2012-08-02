@@ -1,5 +1,8 @@
 package com.github.rickyclarkson.swingflow;
 
+import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
+import com.github.rickyclarkson.monitorablefutures.MonitorableRunnable;
+import fj.data.Option;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
@@ -8,11 +11,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.WindowConstants;
+import java.util.concurrent.Executors;
 
+import static com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService.monitorable;
 import static com.github.rickyclarkson.swingflow.Fraction._Fraction;
-import static com.github.rickyclarkson.swingflow.Option._None;
-import static com.github.rickyclarkson.swingflow.StageProgress._InProgress;
-import static com.github.rickyclarkson.swingflow.StageProgress._Success;
+import static com.github.rickyclarkson.swingflow.ProgressBriefAndDetailed._ProgressBriefAndDetailed;
 
 public class SwingFlow {
     private final Stage[] stages;
@@ -26,7 +30,7 @@ public class SwingFlow {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
-        JPanel panel = new JPanel(new MigLayout());
+        final JPanel panel = new JPanel(new MigLayout());
 
         for (Stage stage: stages)
             panel.add(StageView.stageView(stage, updateEveryXMilliseconds));
@@ -46,11 +50,12 @@ public class SwingFlow {
 
     @EDT
     private static void realMain() {
-        SwingFlow flow = new SwingFlow(sleep(1), sleep(2), sleep(4), sleep(8));
-        JFrame frame = new JFrame();
+        final MonitorableExecutorService executorService = monitorable(Executors.newSingleThreadExecutor());
+        final SwingFlow flow = new SwingFlow(sleep(executorService, 1), sleep(executorService, 2), sleep(executorService, 4), sleep(executorService, 8));
+        final JFrame frame = new JFrame();
         frame.add(flow.view(500));
         frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.pack();
         flow.start();
     }
@@ -59,45 +64,24 @@ public class SwingFlow {
         new StageWorker(stages, 0).execute();
     }
 
-    private static Stage sleep(final int seconds) {
-        return new Stage() {
-            private Option<Long> startTimeMillis = _None();
-
+    private static Stage sleep(final MonitorableExecutorService executorService, final int seconds) {
+        final MonitorableRunnable<ProgressBriefAndDetailed> command = new MonitorableRunnable<ProgressBriefAndDetailed>() {
             @Override
-            public StageProgress progress() {
-                return startTimeMillis.match(new Option.MatchBlock<Long, StageProgress>() {
-                    @Override
-                    public StageProgress _case(Option.Some<Long> startTimeMillis) {
-                        final int slept = (int) ((System.currentTimeMillis() - startTimeMillis.t) / 1000);
-                        final int remaining = seconds - slept;
-                        if (remaining <= 0)
-                            return _Success("Slept for " + seconds + " seconds", Option.<String>_None());
-
-                        return _InProgress(_Fraction(slept, seconds), "Slept for " + slept + "; " + remaining + " to go", Option.<String>_None());
+            public void run() {
+                for (int a = 0; a < seconds; a++) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
-
-                    @Override
-                    public StageProgress _case(Option.None<Long> x) {
-                        return _InProgress(_Fraction(0, seconds), "Sleep for " + seconds, Option._Some("In the middle of a deep, deep " + seconds + " second sleep."));
-                    }
-                });
-            }
-
-            @Override
-            public void start() {
-                startTimeMillis = Option._Some(System.currentTimeMillis());
-                try {
-                    Thread.sleep(seconds * 1000L);
-                } catch (InterruptedException ignored) {
+                    updates().offer(_ProgressBriefAndDetailed(_Fraction(a + 1, seconds), "Slept for " + a + " seconds.", Option.<String>none()));
                 }
             }
-
-            @Override
-            public String name() {
-                return "Sleep for " + seconds + " seconds";
-            }
         };
+
+        return new Stage(executorService, "sleep(" + seconds + ")", command);
     }
+
 
     private static class StageWorker extends SwingWorker<Void, Void> {
         private final Stage[] stages;

@@ -1,13 +1,12 @@
 package com.github.rickyclarkson.swingflow;
 
+import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
+
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import static com.github.rickyclarkson.swingflow.Fraction._Fraction;
-import static com.github.rickyclarkson.swingflow.ProgressBriefAndDetailed._ProgressBriefAndDetailed;
 
 public class StageView extends VerticalPanel {
     private final Timer timer;
@@ -26,26 +25,16 @@ public class StageView extends VerticalPanel {
         Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ProgressBriefAndDetailed result = stage.progress().match(new StageProgress.MatchBlock<ProgressBriefAndDetailed>() {
-                    @Override
-                    public ProgressBriefAndDetailed _case(StageProgress.Success x) {
-                        return _ProgressBriefAndDetailed(_Fraction(1, 1), x.brief, x.detailed);
-                    }
+                for (MonitorableFuture<Void, ProgressBriefAndDetailed> future: stage.future()) {
+                    final ProgressBriefAndDetailed result = future.updates().poll();
+                    if (result == null)
+                        return;
 
-                    @Override
-                    public ProgressBriefAndDetailed _case(StageProgress.InProgress x) {
-                        return _ProgressBriefAndDetailed(x.complete, x.brief, x.detailed);
-                    }
-
-                    @Override
-                    public ProgressBriefAndDetailed _case(StageProgress.Failed x) {
-                        return _ProgressBriefAndDetailed(_Fraction(0, 1), x.brief, x.detailed);
-                    }
-                });
-
-                bar.setValue(result.complete.numerator * 100 / result.complete.denominator);
-                bar.setString(result.brief);
-                details.setDetails(result.detailed);
+                    final Fraction fraction = result.complete;
+                    bar.setValue(fraction.numerator * 100 / fraction.denominator);
+                    bar.setString(result.brief);
+                    details.setDetails(result.detailed);
+                }
             }
         });
 
