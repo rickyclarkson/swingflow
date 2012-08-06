@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import static com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService.monitorable;
@@ -74,8 +75,9 @@ public class SwingFlow {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates().offer(_ProgressBriefAndDetailed(_Fraction(a + 1, seconds), "Slept for " + a + " seconds.", Option.<String>none()));
+                    updates().offer(_ProgressBriefAndDetailed(_Fraction(a + 1, seconds), "Slept for " + (a + 1) + " seconds.", Option.some("Still sleeping, a = " + a)));
                 }
+                updates().offer(_ProgressBriefAndDetailed(_Fraction(seconds, seconds), "Finished", Option.some("fart")));
             }
         };
 
@@ -99,6 +101,16 @@ public class SwingFlow {
                 new StageWorker(stages, index + 1).execute();
 
             return null;
+        }
+
+        public void done() {
+            try {
+                get();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

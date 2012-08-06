@@ -26,27 +26,26 @@ import java.awt.event.MouseEvent;
 import static com.github.rickyclarkson.swingflow.Windows.close;
 
 public class DetailsButton extends JButton {
-    private Option<JTextArea> popup = Option.none();
+    private final JTextArea popup = new JTextArea(5, 20);
 
     public DetailsButton() {
         super("Details >>");
         addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final JTextArea someTextArea = popup.some();
                 final JWindow window = new JWindow();
 
                 final Border border = BorderFactory.createLineBorder(Color.black);
-                someTextArea.setBorder(border);
+                popup.setBorder(border);
                 final JPanel northPanel = gradientPanel(new BorderLayout());
                 northPanel.add(new JLabel("Details"), BorderLayout.WEST);
                 northPanel.add(closeButton(close(window)), BorderLayout.EAST);
                 window.add(northPanel, BorderLayout.NORTH);
-                window.add(someTextArea);
+                window.add(popup);
                 window.setMinimumSize(new Dimension(200, 100));
                 window.pack();
-                someTextArea.setFocusable(true);
-                someTextArea.setEditable(true);
+                popup.setFocusable(true);
+                popup.setEditable(true);
                 final Rectangle bounds = window.getGraphicsConfiguration().getBounds();
                 final int x = getLocationOnScreen().x;
                 final int y = getLocationOnScreen().y + getSize().height;
@@ -98,23 +97,13 @@ public class DetailsButton extends JButton {
     @EDT
     public void setDetails(final Option<String> details) {
         EDT.Assert.onEdt();
-        if (popup.isSome()) {
-            final JTextArea someTextArea = popup.some();
-            if (details.isSome())
-                someTextArea.setText(details.some());
-            else {
-                for (JWindow someWindow: Windows.findAncestor(someTextArea, JWindow.class))
-                    someWindow.dispose();
-
-                popup = Option.none();
-            }
-        } else {
-            for (String someString: details) {
-                final JTextArea textArea = new JTextArea(someString);
-                popup = Option.some(textArea);
-            }
+        if (details.isSome())
+            popup.setText(details.some());
+        else {
+            for (JWindow someWindow: Windows.findAncestor(popup, JWindow.class))
+                someWindow.dispose();
         }
 
-        setEnabled(popup.isSome());
+        setEnabled(details.isSome());
     }
 }
