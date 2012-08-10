@@ -68,7 +68,7 @@
         <dependency>
             <groupId>com.github.rickyclarkson</groupId>
             <artifactId>monitorablefutures</artifactId>
-            <version>1.5-SNAPSHOT</version>
+            <version>1.5</version>
         </dependency>
         <dependency>
             <groupId>org.functionaljava</groupId>
