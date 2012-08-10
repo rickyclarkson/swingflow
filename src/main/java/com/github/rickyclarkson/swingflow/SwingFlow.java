@@ -1,7 +1,7 @@
 package com.github.rickyclarkson.swingflow;
 
 import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
-import com.github.rickyclarkson.monitorablefutures.MonitorableRunnable;
+import com.github.rickyclarkson.monitorablefutures.Monitorable;
 import fj.data.Option;
 import net.miginfocom.swing.MigLayout;
 
@@ -66,18 +66,18 @@ public class SwingFlow {
     }
 
     private static Stage sleep(final MonitorableExecutorService executorService, final int seconds) {
-        final MonitorableRunnable<ProgressBriefAndDetailed> command = new MonitorableRunnable<ProgressBriefAndDetailed>() {
+        final Monitorable<ProgressBriefAndDetailed> command = new Monitorable<ProgressBriefAndDetailed>() {
             @Override
-            public void run() {
+            public ProgressBriefAndDetailed call() {
                 for (int a = 0; a < seconds; a++) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates().offer(_ProgressBriefAndDetailed(_Fraction(a + 1, seconds), "Slept for " + (a + 1) + " seconds.", Option.some("Still sleeping, a = " + a)));
+                    updates.offer(_ProgressBriefAndDetailed(_Fraction(a + 1, seconds), "Slept for " + (a + 1) + " seconds.", Option.some("Still sleeping, a = " + a)));
                 }
-                updates().offer(_ProgressBriefAndDetailed(_Fraction(seconds, seconds), "Finished", Option.some("fart")));
+                return _ProgressBriefAndDetailed(_Fraction(seconds, seconds), "Finished", Option.some("fart"));
             }
         };
 

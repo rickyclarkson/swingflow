@@ -22,10 +22,10 @@ public class StageView extends VerticalPanel {
         bar.setStringPainted(true);
         final DetailsButton details = new DetailsButton();
 
-        Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
+        final Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (MonitorableFuture<Void, ProgressBriefAndDetailed> future: stage.future()) {
+                for (MonitorableFuture<ProgressBriefAndDetailed> future: stage.future()) {
                     final ProgressBriefAndDetailed result = future.updates().poll();
                     if (result == null)
                         return;

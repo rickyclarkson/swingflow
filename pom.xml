@@ -2,9 +2,38 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>1</version>
+    </parent>
     <groupId>com.github.rickyclarkson</groupId>
     <artifactId>swingflow</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>swingflow</name>
+    <description>A library to display and control workflows in Swing</description>
+    <url>http://github.com/rickyclarkson/swingflow</url>
+    <licenses>
+        <license>
+            <name>BSD-2-Clause</name>
+            <url>BSD-2-Clause.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
+        </license>
+    </licenses>
+    <scm>
+        <connection>scm:git:ssh://git@github.com/rickyclarkson/swingflow.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/rickyclarkson/swingflow.git</developerConnection>
+        <url>http://github.com/rickyclarkson/swingflow</url>
+        <tag>HEAD</tag>
+    </scm>
+    <developers>
+        <developer>
+            <name>Ricky Clarkson</name>
+            <email>ricky.clarkson@gmail.com</email>
+        </developer>
+    </developers>
     <build>
         <plugins>
             <plugin>
@@ -39,7 +68,7 @@
         <dependency>
             <groupId>com.github.rickyclarkson</groupId>
             <artifactId>monitorablefutures</artifactId>
-            <version>1.3</version>
+            <version>1.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.functionaljava</groupId>
