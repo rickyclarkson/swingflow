@@ -1,7 +1,5 @@
 package com.github.rickyclarkson.swingflow;
 
-import fj.data.Option;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -95,15 +93,15 @@ public class DetailsButton extends JButton {
     }
 
     @EDT
-    public void setDetails(final Option<String> details) {
+    public void setDetails(final String details) {
         EDT.Assert.onEdt();
-        if (details.isSome())
-            popup.setText(details.some());
+        if (!details.isEmpty())
+            popup.setText(details);
         else {
             for (JWindow someWindow: Windows.findAncestor(popup, JWindow.class))
                 someWindow.dispose();
         }
 
-        setEnabled(details.isSome());
+        setEnabled(!details.isEmpty());
     }
 }

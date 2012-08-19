@@ -10,16 +10,16 @@ import java.util.concurrent.TimeUnit;
 public final class Stage {
     private final MonitorableExecutorService executorService;
     private final String name;
-    private final Monitorable<ProgressBriefAndDetailed> command;
-    private Option<MonitorableFuture<ProgressBriefAndDetailed>> future = Option.none();
+    private final Monitorable<Progress> command;
+    private Option<MonitorableFuture<Progress>> future = Option.none();
 
-    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<ProgressBriefAndDetailed> command) {
+    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command) {
         this.executorService = executorService;
         this.name = name;
-        this.command = new Monitorable<ProgressBriefAndDetailed>(command.updates) {
+        this.command = new Monitorable<Progress>(command.updates) {
             @Override
-            public ProgressBriefAndDetailed call() throws Exception {
-                final ProgressBriefAndDetailed result = command.call();
+            public Progress call() throws Exception {
+                final Progress result = command.call();
                 if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
                     final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
                     exception.printStackTrace();
@@ -30,7 +30,7 @@ public final class Stage {
         };
     }
 
-    public Monitorable<ProgressBriefAndDetailed> command() {
+    public Monitorable<Progress> command() {
         return command;
     }
 
@@ -42,7 +42,7 @@ public final class Stage {
         return name;
     }
 
-    public Option<MonitorableFuture<ProgressBriefAndDetailed>> future() {
+    public Option<MonitorableFuture<Progress>> future() {
         return future;
     }
 }

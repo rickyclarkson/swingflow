@@ -25,15 +25,27 @@ public class StageView extends VerticalPanel {
         final Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (MonitorableFuture<ProgressBriefAndDetailed> future: stage.future()) {
-                    final ProgressBriefAndDetailed result = future.updates().poll();
+                for (MonitorableFuture<Progress> future: stage.future()) {
+                    final Progress result = future.updates().poll();
                     if (result == null)
                         return;
 
-                    final Fraction fraction = result.complete;
-                    bar.setValue(fraction.numerator * 100 / fraction.denominator);
-                    bar.setString(result.brief);
-                    details.setDetails(result.detailed);
+                    result._switch(new Progress.SwitchBlock() {
+                        @Override
+                        public void _case(Progress.InProgress x) {
+                            displayProgress(bar, x.numerator, x.denominator, details, x.brief, x.detail);
+                        }
+
+                        @Override
+                        public void _case(Progress.Complete x) {
+                            displayProgress(bar, 100, 100, details, x.brief, x.detail);
+                        }
+
+                        @Override
+                        public void _case(Progress.Failed x) {
+                            displayProgress(bar, x.numerator, x.denominator, details, x.brief, x.detail);
+                        }
+                    });
                 }
             }
         });
@@ -41,6 +53,12 @@ public class StageView extends VerticalPanel {
         timer.start();
 
         return new StageView(stage, bar, details, timer);
+    }
+
+    private static void displayProgress(JProgressBar bar, int numerator, int denominator, DetailsButton detailButton, String brief, String detail) {
+        bar.setValue(numerator * 100 / denominator);
+        bar.setString(brief);
+        detailButton.setDetails(detail);
     }
 
     public void removeNotify() {

@@ -1,8 +1,7 @@
 package com.github.rickyclarkson.swingflow;
 
-import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import com.github.rickyclarkson.monitorablefutures.Monitorable;
-import fj.data.Option;
+import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
@@ -16,8 +15,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import static com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService.monitorable;
-import static com.github.rickyclarkson.swingflow.Fraction._Fraction;
-import static com.github.rickyclarkson.swingflow.ProgressBriefAndDetailed._ProgressBriefAndDetailed;
+import static com.github.rickyclarkson.swingflow.Progress._Complete;
+import static com.github.rickyclarkson.swingflow.Progress._InProgress;
 
 public class SwingFlow {
     private final Stage[] stages;
@@ -66,18 +65,18 @@ public class SwingFlow {
     }
 
     private static Stage sleep(final MonitorableExecutorService executorService, final int seconds) {
-        final Monitorable<ProgressBriefAndDetailed> command = new Monitorable<ProgressBriefAndDetailed>() {
+        final Monitorable<Progress> command = new Monitorable<Progress>() {
             @Override
-            public ProgressBriefAndDetailed call() {
+            public Progress call() {
                 for (int a = 0; a < seconds; a++) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates.offer(_ProgressBriefAndDetailed(_Fraction(a + 1, seconds), "Slept for " + (a + 1) + " seconds.", Option.some("Still sleeping, a = " + a)));
+                    updates.offer(_InProgress(a + 1, seconds, "Slept for " + (a + 1) + " seconds.", "Still sleeping, a = " + a));
                 }
-                return _ProgressBriefAndDetailed(_Fraction(seconds, seconds), "Finished", Option.some("fart"));
+                return _Complete("Finished", "All sleeping complete");
             }
         };
 
