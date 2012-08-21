@@ -60,7 +60,7 @@ public class SwingFlow {
         flow.start();
     }
 
-    private void start() {
+    public void start() {
         new StageWorker(stages, 0).execute();
     }
 
