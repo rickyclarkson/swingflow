@@ -20,6 +20,10 @@ public class StageView extends VerticalPanel {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
+        bar.setString(stage.longestString + "wwww");
+        bar.setPreferredSize(bar.getPreferredSize());
+        bar.setString("");
+
         final DetailsButton details = new DetailsButton();
 
         final Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
@@ -33,18 +37,27 @@ public class StageView extends VerticalPanel {
                     result._switch(new Progress.SwitchBlock() {
                         @Override
                         public void _case(Progress.InProgress x) {
-                            displayProgress(bar, x.numerator, x.denominator, details, x.brief, x.detail);
+                            displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
 
                         @Override
                         public void _case(Progress.Complete x) {
-                            displayProgress(bar, 100, 100, details, x.brief, x.detail);
+                            displayProgress(100, 100, x.brief, x.detail);
                         }
 
                         @Override
                         public void _case(Progress.Failed x) {
-                            displayProgress(bar, x.numerator, x.denominator, details, x.brief, x.detail);
+                            displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
+
+                        private void displayProgress(int numerator, int denominator, String brief, String detail) {
+                            bar.setValue(numerator * 100 / denominator);
+                            if (brief.length() > stage.longestString.length())
+                                throw new IllegalStateException("The provided string [" + brief + "] is longer than the provided maximum length string [" + stage.longestString + "] - we reject this to prevent display corruption.");
+                            bar.setString(brief);
+                            details.setDetails(detail);
+                        }
+
                     });
                 }
             }
@@ -53,12 +66,6 @@ public class StageView extends VerticalPanel {
         timer.start();
 
         return new StageView(stage, bar, details, timer);
-    }
-
-    private static void displayProgress(JProgressBar bar, int numerator, int denominator, DetailsButton detailButton, String brief, String detail) {
-        bar.setValue(numerator * 100 / denominator);
-        bar.setString(brief);
-        detailButton.setDetails(detail);
     }
 
     public void removeNotify() {

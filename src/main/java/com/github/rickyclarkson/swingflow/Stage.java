@@ -10,12 +10,14 @@ import java.util.concurrent.TimeUnit;
 public final class Stage {
     private final MonitorableExecutorService executorService;
     private final String name;
+    final String longestString;
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
 
-    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command) {
+    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, String longestString) {
         this.executorService = executorService;
         this.name = name;
+        this.longestString = longestString;
         this.command = new Monitorable<Progress>(command.updates) {
             @Override
             public Progress call() throws Exception {

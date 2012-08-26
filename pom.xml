@@ -60,11 +60,6 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>com.miglayout</groupId>
-            <artifactId>miglayout</artifactId>
-            <version>3.7.1</version>
-        </dependency>
-        <dependency>
             <groupId>com.github.rickyclarkson</groupId>
             <artifactId>monitorablefutures</artifactId>
             <version>1.5</version>

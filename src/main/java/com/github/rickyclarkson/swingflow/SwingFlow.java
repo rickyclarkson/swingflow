@@ -2,15 +2,14 @@ package com.github.rickyclarkson.swingflow;
 
 import com.github.rickyclarkson.monitorablefutures.Monitorable;
 import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
-import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
+import java.awt.GridLayout;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -30,13 +29,12 @@ public class SwingFlow {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
-        final JPanel panel = new JPanel(new MigLayout());
+        final JPanel panel = new JPanel(new GridLayout(1, stages.length, 20, 20));
 
         for (Stage stage: stages)
             panel.add(StageView.stageView(stage, updateEveryXMilliseconds));
 
-        panel.setPreferredSize(panel.getPreferredSize());
-        return new JScrollPane(panel);
+        return panel;
     }
 
     public static void main(String[] args) {
@@ -54,9 +52,9 @@ public class SwingFlow {
         final SwingFlow flow = new SwingFlow(sleep(executorService, 1), sleep(executorService, 2), sleep(executorService, 4), sleep(executorService, 8));
         final JFrame frame = new JFrame();
         frame.add(flow.view(500));
+        frame.pack();
         frame.setVisible(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.pack();
         flow.start();
     }
 
@@ -80,7 +78,7 @@ public class SwingFlow {
             }
         };
 
-        return new Stage(executorService, "sleep(" + seconds + ")", command);
+        return new Stage(executorService, "sleep(" + seconds + ")", command, "Slept for " + seconds + " seconds.");
     }
 
 
