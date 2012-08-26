@@ -5,23 +5,23 @@ import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
 import fj.data.Option;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public final class Stage {
+public final class Stage<T> {
     private final MonitorableExecutorService executorService;
     private final String name;
-    final String longestString;
-    private final Monitorable<Progress> command;
-    private Option<MonitorableFuture<Progress>> future = Option.none();
+    private final Monitorable<Progress<T>> command;
+    private Option<MonitorableFuture<Progress<T>>> future = Option.none();
+    public final List<T> possibleValues;
 
-    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, String longestString) {
+    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress<T>> command, List<T> possibleValues) {
         this.executorService = executorService;
         this.name = name;
-        this.longestString = longestString;
-        this.command = new Monitorable<Progress>(command.updates) {
+        this.command = new Monitorable<Progress<T>>(command.updates) {
             @Override
-            public Progress call() throws Exception {
-                final Progress result = command.call();
+            public Progress<T> call() throws Exception {
+                final Progress<T> result = command.call();
                 if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
                     final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
                     exception.printStackTrace();
@@ -30,9 +30,10 @@ public final class Stage {
                 return result;
             }
         };
+        this.possibleValues = possibleValues;
     }
 
-    public Monitorable<Progress> command() {
+    public Monitorable<Progress<T>> command() {
         return command;
     }
 
@@ -44,7 +45,7 @@ public final class Stage {
         return name;
     }
 
-    public Option<MonitorableFuture<Progress>> future() {
+    public Option<MonitorableFuture<Progress<T>>> future() {
         return future;
     }
 }

@@ -16,11 +16,14 @@ public class StageView extends VerticalPanel {
         this.timer = timer;
     }
 
-    public static StageView stageView(final Stage stage, int updateEveryXMilliseconds) {
+    public static <T> StageView stageView(final Stage<T> stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
-        bar.setString(stage.longestString + "wwww");
+        String longest = "";
+        for (T t: stage.possibleValues)
+            longest = longest.length() > t.toString().length() ? longest : t.toString();
+        bar.setString(longest + "wwww");
         bar.setPreferredSize(bar.getPreferredSize());
         bar.setString("");
 
@@ -29,32 +32,32 @@ public class StageView extends VerticalPanel {
         final Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (MonitorableFuture<Progress> future: stage.future()) {
-                    final Progress result = future.updates().poll();
+                for (MonitorableFuture<Progress<T>> future: stage.future()) {
+                    final Progress<T> result = future.updates().poll();
                     if (result == null)
                         return;
 
-                    result._switch(new Progress.SwitchBlock() {
+                    result._switch(new Progress.SwitchBlock<T>() {
                         @Override
-                        public void _case(Progress.InProgress x) {
+                        public void _case(Progress.InProgress<T> x) {
                             displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
 
                         @Override
-                        public void _case(Progress.Complete x) {
+                        public void _case(Progress.Complete<T> x) {
                             displayProgress(100, 100, x.brief, x.detail);
                         }
 
                         @Override
-                        public void _case(Progress.Failed x) {
+                        public void _case(Progress.Failed<T> x) {
                             displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
 
-                        private void displayProgress(int numerator, int denominator, String brief, String detail) {
+                        private void displayProgress(int numerator, int denominator, T brief, String detail) {
                             bar.setValue(numerator * 100 / denominator);
-                            if (brief.length() > stage.longestString.length())
-                                throw new IllegalStateException("The provided string [" + brief + "] is longer than the provided maximum length string [" + stage.longestString + "] - we reject this to prevent display corruption.");
-                            bar.setString(brief);
+                            if (!stage.possibleValues.contains(brief))
+                                throw new IllegalArgumentException("The argument [" + brief + "] was provided but is not in the list of possible values for stage " + stage.name());
+                            bar.setString(brief.toString());
                             details.setDetails(detail);
                         }
 
@@ -72,5 +75,4 @@ public class StageView extends VerticalPanel {
         timer.stop();
         super.removeNotify();
     }
-
 }

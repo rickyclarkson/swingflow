@@ -10,6 +10,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import java.awt.GridLayout;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -31,7 +32,7 @@ public class SwingFlow {
 
         final JPanel panel = new JPanel(new GridLayout(1, stages.length, 20, 20));
 
-        for (Stage stage: stages)
+        for (Stage<?> stage: stages)
             panel.add(StageView.stageView(stage, updateEveryXMilliseconds));
 
         return panel;
@@ -62,23 +63,38 @@ public class SwingFlow {
         new StageWorker(stages, 0).execute();
     }
 
+    private enum SleepMessages {
+        SLEEPING("Sleeping"),
+        COMPLETE("Complete");
+
+        private final String text;
+
+        SleepMessages(String text) {
+            this.text = text;
+        }
+
+        public String toString() {
+            return text;
+        }
+    }
+
     private static Stage sleep(final MonitorableExecutorService executorService, final int seconds) {
-        final Monitorable<Progress> command = new Monitorable<Progress>() {
+        final Monitorable<Progress<SleepMessages>> command = new Monitorable<Progress<SleepMessages>>() {
             @Override
-            public Progress call() {
+            public Progress<SleepMessages> call() {
                 for (int a = 0; a < seconds; a++) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates.offer(_InProgress(a + 1, seconds, "Slept for " + (a + 1) + " seconds.", "Still sleeping, a = " + a));
+                    updates.offer(_InProgress(a + 1, seconds, SleepMessages.SLEEPING, "Still sleeping, a = " + a));
                 }
-                return _Complete("Finished", "All sleeping complete");
+                return _Complete(SleepMessages.COMPLETE, "All sleeping complete");
             }
         };
 
-        return new Stage(executorService, "sleep(" + seconds + ")", command, "Slept for " + seconds + " seconds.");
+        return new Stage<SleepMessages>(executorService, "sleep(" + seconds + ")", command, Arrays.asList(SleepMessages.values()));
     }
 
 
