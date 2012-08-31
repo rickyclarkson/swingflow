@@ -60,14 +60,14 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>com.github.rickyclarkson</groupId>
-            <artifactId>monitorablefutures</artifactId>
-            <version>1.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.functionaljava</groupId>
             <artifactId>functionaljava</artifactId>
             <version>3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>r09</version>
         </dependency>
     </dependencies>
 </project>

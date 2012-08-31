@@ -1,39 +1,35 @@
 package com.github.rickyclarkson.swingflow;
 
-import com.github.rickyclarkson.monitorablefutures.Monitorable;
-import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
+import com.google.common.collect.Iterables;
+import fj.data.Option;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import java.awt.GridLayout;
 import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 
-import static com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService.monitorable;
 import static com.github.rickyclarkson.swingflow.Progress._Complete;
 import static com.github.rickyclarkson.swingflow.Progress._InProgress;
 
 public class SwingFlow {
-    private final Stage[] stages;
+    private final Stage<?> stage;
 
-    public SwingFlow(Stage... stages) {
-        this.stages = stages;
+    public SwingFlow(Stage stage) {
+        this.stage = stage;
     }
 
     @EDT
-    public JComponent view(int updateEveryXMilliseconds) {
+    public JComponent view() {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
-        final JPanel panel = new JPanel(new GridLayout(1, stages.length, 20, 20));
+        final JPanel panel = new JPanel(new GridLayout(1, Iterables.size(stage), 20, 20));
 
-        for (Stage<?> stage: stages)
-            panel.add(StageView.stageView(stage, updateEveryXMilliseconds));
+        for (Stage<?> s: stage)
+            panel.add(StageView.stageView(s));
 
         return panel;
     }
@@ -49,10 +45,10 @@ public class SwingFlow {
 
     @EDT
     private static void realMain() {
-        final MonitorableExecutorService executorService = monitorable(Executors.newSingleThreadExecutor());
-        final SwingFlow flow = new SwingFlow(sleep(executorService, 1), sleep(executorService, 2), sleep(executorService, 4), sleep(executorService, 8));
+        final SwingFlow flow = new SwingFlow(sleep(1, Option.some(sleep(2, Option.some(sleep(4, Option.some(sleep(8, Option.<Stage<SleepMessages>>none()))))))));
+
         final JFrame frame = new JFrame();
-        frame.add(flow.view(500));
+        frame.add(flow.view());
         frame.pack();
         frame.setVisible(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -60,7 +56,7 @@ public class SwingFlow {
     }
 
     public void start() {
-        new StageWorker(stages, 0).execute();
+        stage.execute();
     }
 
     private enum SleepMessages {
@@ -78,8 +74,8 @@ public class SwingFlow {
         }
     }
 
-    private static Stage sleep(final MonitorableExecutorService executorService, final int seconds) {
-        final Monitorable<Progress<SleepMessages>> command = new Monitorable<Progress<SleepMessages>>() {
+    private static Stage<SleepMessages> sleep(final int seconds, Option<Stage<SleepMessages>> next) {
+        return new Stage<SleepMessages>("sleep(" + seconds + ")", Arrays.asList(SleepMessages.values()), next) {
             @Override
             public Progress<SleepMessages> call() {
                 for (int a = 0; a < seconds; a++) {
@@ -88,42 +84,10 @@ public class SwingFlow {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates.offer(_InProgress(a + 1, seconds, SleepMessages.SLEEPING, "Still sleeping, a = " + a));
+                    push(_InProgress(a + 1, seconds, SleepMessages.SLEEPING, "Still sleeping, a = " + a));
                 }
                 return _Complete(SleepMessages.COMPLETE, "All sleeping complete");
             }
         };
-
-        return new Stage<SleepMessages>(executorService, "sleep(" + seconds + ")", command, Arrays.asList(SleepMessages.values()));
-    }
-
-
-    private static class StageWorker extends SwingWorker<Void, Void> {
-        private final Stage[] stages;
-        private final int index;
-
-        public StageWorker(Stage[] stages, int index) {
-            this.stages = stages;
-            this.index = index;
-        }
-
-        @Override
-        protected Void doInBackground() throws Exception {
-            stages[index].start();
-            if (stages.length > index + 1)
-                new StageWorker(stages, index + 1).execute();
-
-            return null;
-        }
-
-        public void done() {
-            try {
-                get();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }
