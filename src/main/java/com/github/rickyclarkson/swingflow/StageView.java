@@ -1,15 +1,20 @@
 package com.github.rickyclarkson.swingflow;
 
+import javax.swing.JButton;
 import javax.swing.JProgressBar;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 public class StageView {
     public final JProgressBar progressBar;
     public final DetailsButton detailsButton;
+    public final JButton cancelButton;
 
-    private StageView(JProgressBar progressBar, DetailsButton detailsButton) {
+    private StageView(JProgressBar progressBar, DetailsButton detailsButton, JButton cancelButton) {
         this.progressBar = progressBar;
         this.detailsButton = detailsButton;
+        this.cancelButton = cancelButton;
     }
 
     public static <T> StageView stageView(final Stage<T> stage) {
@@ -55,6 +60,13 @@ public class StageView {
             }
         });
 
-        return new StageView(bar, details);
+        final JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                stage.cancel(true);
+            }
+        });
+        return new StageView(bar, details, cancelButton);
     }
 }

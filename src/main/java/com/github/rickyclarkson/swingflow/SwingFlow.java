@@ -5,6 +5,7 @@ import net.miginfocom.layout.AC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 
+import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,16 +32,19 @@ public class SwingFlow {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
-        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(3), new AC(), new AC()));
+        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(1), new AC(), new AC()));
 
         for (Stage<?> s: stage) {
+            final JPanel titlePanel = new JPanel();
+            titlePanel.setBorder(BorderFactory.createTitledBorder(s.name()));
             final StageView view = StageView.stageView(s);
-            panel.add(new JLabel(s.name()));
-            panel.add(view.progressBar);
+            titlePanel.add(view.progressBar);
             final JToolBar invisibleBar = new JToolBar();
             invisibleBar.setFloatable(false);
             invisibleBar.add(view.detailsButton);
-            panel.add(invisibleBar);
+            invisibleBar.add(view.cancelButton);
+            titlePanel.add(invisibleBar);
+            panel.add(titlePanel);
         }
 
         return panel;
