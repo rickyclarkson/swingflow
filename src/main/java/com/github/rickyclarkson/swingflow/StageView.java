@@ -1,12 +1,15 @@
 package com.github.rickyclarkson.swingflow;
 
-import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import java.util.List;
 
-public class StageView extends VerticalPanel {
-    private StageView(Stage stage, JProgressBar bar, DetailsButton details) {
-        super(new JLabel(stage.name()), bar, details);
+public class StageView {
+    public final JProgressBar progressBar;
+    public final DetailsButton detailsButton;
+
+    private StageView(JProgressBar progressBar, DetailsButton detailsButton) {
+        this.progressBar = progressBar;
+        this.detailsButton = detailsButton;
     }
 
     public static <T> StageView stageView(final Stage<T> stage) {
@@ -52,6 +55,6 @@ public class StageView extends VerticalPanel {
             }
         });
 
-        return new StageView(stage, bar, details);
+        return new StageView(bar, details);
     }
 }

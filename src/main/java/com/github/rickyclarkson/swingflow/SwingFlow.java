@@ -2,10 +2,13 @@ package com.github.rickyclarkson.swingflow;
 
 import com.google.common.collect.Iterables;
 import fj.data.Option;
+import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import java.awt.GridLayout;
@@ -26,10 +29,17 @@ public class SwingFlow {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
-        final JPanel panel = new JPanel(new GridLayout(1, Iterables.size(stage), 20, 20));
+        final JPanel panel = new JPanel(new GridLayout(Iterables.size(stage), 3));
 
-        for (Stage<?> s: stage)
-            panel.add(StageView.stageView(s));
+        for (Stage<?> s: stage) {
+            final StageView view = StageView.stageView(s);
+            panel.add(new JLabel(s.name()));
+            panel.add(view.progressBar);
+            final JToolBar invisibleBar = new JToolBar();
+            invisibleBar.setFloatable(false);
+            invisibleBar.add(view.detailsButton);
+            panel.add(invisibleBar);
+        }
 
         return panel;
     }
