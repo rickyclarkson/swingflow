@@ -1,7 +1,8 @@
 package com.github.rickyclarkson.swingflow;
 
-import com.google.common.collect.Iterables;
 import fj.data.Option;
+import net.miginfocom.layout.AC;
+import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.JComponent;
@@ -10,8 +11,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
-import java.awt.GridLayout;
 import java.util.Arrays;
 
 import static com.github.rickyclarkson.swingflow.Progress._Complete;
@@ -29,7 +31,7 @@ public class SwingFlow {
         if (!SwingUtilities.isEventDispatchThread())
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
-        final JPanel panel = new JPanel(new GridLayout(Iterables.size(stage), 3));
+        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(3), new AC(), new AC()));
 
         for (Stage<?> s: stage) {
             final StageView view = StageView.stageView(s);
@@ -48,13 +50,24 @@ public class SwingFlow {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                realMain();
+                try {
+                    realMain();
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                } catch (UnsupportedLookAndFeelException e) {
+                    throw new RuntimeException(e);
+                } catch (InstantiationException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
 
     @EDT
-    private static void realMain() {
+    private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         final SwingFlow flow = new SwingFlow(sleep(1, Option.some(sleep(2, Option.some(sleep(4, Option.some(sleep(8, Option.<Stage<SleepMessages>>none()))))))));
 
         final JFrame frame = new JFrame();
