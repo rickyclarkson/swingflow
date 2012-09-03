@@ -106,7 +106,8 @@ public class SwingFlow {
 
     private enum SleepMessages {
         SLEEPING("Sleeping"),
-        COMPLETE("Complete");
+        COMPLETE("Complete"),
+        INTERRUPTED("Interrupted");
 
         private final String text;
 
@@ -135,7 +136,7 @@ public class SwingFlow {
             }
         };
 
-        return Stage.stage(executorService, "sleep(" + seconds + ")", command, Arrays.asList(SleepMessages.values()), next);
+        return Stage.stage(executorService, "sleep(" + seconds + ")", command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
 
     }
 }

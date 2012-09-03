@@ -18,8 +18,11 @@ public final class Stage implements Iterable<Stage> {
     private final List<String> possibleValues;
     private final Option<Stage> next;
 
-    public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, final Option<Stage> next) {
-        return new Stage(executorService, name, command, mapToString(possibleValues), next);
+    public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+        if (!possibleValues.contains(onException))
+            throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
+
+        return new Stage(executorService, name, command, mapToString(possibleValues), onException.toString(), next);
     }
 
     private static <T> List<String> mapToString(List<T> list) {
@@ -29,13 +32,19 @@ public final class Stage implements Iterable<Stage> {
         return results;
     }
 
-    private Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final Option<Stage> next) {
+    private Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
         this.executorService = executorService;
         this.name = name;
         this.command = new Monitorable<Progress>(command.updates) {
             @Override
             public Progress call() throws Exception {
-                final Progress result = command.call();
+                Progress result;
+                try {
+                    result = command.call();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result = Progress._Failed(0, 100, onException, e.getMessage());
+                }
                 if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
                     final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
                     exception.printStackTrace();
