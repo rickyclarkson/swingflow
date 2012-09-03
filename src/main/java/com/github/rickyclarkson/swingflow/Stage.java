@@ -5,12 +5,7 @@ import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
 import fj.data.Option;
 
-import javax.swing.SwingWorker;
-import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 public final class Stage<T> {

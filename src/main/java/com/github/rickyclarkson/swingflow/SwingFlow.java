@@ -53,6 +53,7 @@ public class SwingFlow {
             final JPanel titlePanel = new JPanel();
             titlePanel.setBorder(BorderFactory.createTitledBorder(stage.name()));
             final StageView view = StageView.stageView(stage, updateEveryXMilliseconds);
+            timersToCancel.add(view.timer);
             titlePanel.add(view.progressBar);
             final JToolBar invisibleBar = new JToolBar();
             invisibleBar.setFloatable(false);
