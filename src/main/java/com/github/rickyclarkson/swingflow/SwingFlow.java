@@ -40,7 +40,7 @@ public class SwingFlow {
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
         final List<Timer> timersToCancel = new ArrayList<Timer>();
-        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(1), new AC(), new AC())) {
+        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(1).fillY(), new AC(), new AC())) {
             @Override
             public void removeNotify() {
                 for (Timer timer: timersToCancel)
