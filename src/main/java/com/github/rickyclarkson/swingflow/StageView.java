@@ -1,13 +1,16 @@
 package com.github.rickyclarkson.swingflow;
 
 import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
+import fj.data.Option;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.Future;
 
 public class StageView {
     public final JProgressBar progressBar;
@@ -77,7 +80,11 @@ public class StageView {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                stage.future().some().cancel(true);
+                final Option<MonitorableFuture<Progress>> futureOption = stage.future();
+                if (futureOption.isNone() || futureOption.some().isDone())
+                    JOptionPane.showMessageDialog(cancelButton, "Cannot cancel a task that is not currently running.");
+                else
+                    futureOption.some().cancel(true);
             }
         });
 
