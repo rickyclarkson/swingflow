@@ -59,7 +59,7 @@ public final class Stage implements Iterable<Stage> {
 
                     @Override
                     public void _case(Progress.Complete x) {
-                        for (Stage n: next)
+                        for (Stage n: Stage.this.next)
                             n.start();
                     }
 
