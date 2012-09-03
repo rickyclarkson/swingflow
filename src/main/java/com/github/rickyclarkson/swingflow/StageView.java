@@ -85,7 +85,10 @@ public class StageView {
         retryButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                throw null;
+                if (!stage.future().some().isDone())
+                    throw null;
+
+                stage.rerun();
             }
         });
 

@@ -119,4 +119,9 @@ public final class Stage implements Iterable<Stage> {
             }
         };
     }
+
+    public void rerun() {
+        future = Option.none();
+        start();
+    }
 }
