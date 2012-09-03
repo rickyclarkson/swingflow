@@ -24,7 +24,7 @@ public class StageView {
         this.retryButton = retryButton;
     }
 
-    public static StageView stageView(final UntypedStage stage, int updateEveryXMilliseconds) {
+    public static StageView stageView(final Stage stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);

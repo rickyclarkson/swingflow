@@ -25,11 +25,12 @@ import java.util.concurrent.Executors;
 
 import static com.github.rickyclarkson.swingflow.Progress._Complete;
 import static com.github.rickyclarkson.swingflow.Progress._InProgress;
+import static com.github.rickyclarkson.swingflow.Stage.stage;
 
 public class SwingFlow {
-    private final UntypedStage stage;
+    private final Stage stage;
 
-    public SwingFlow(UntypedStage stage) {
+    public SwingFlow(Stage stage) {
         this.stage = stage;
     }
 
@@ -48,7 +49,7 @@ public class SwingFlow {
             }
         };
 
-        for (UntypedStage s: stage) {
+        for (Stage s: stage) {
             final JPanel titlePanel = new JPanel();
             titlePanel.setBorder(BorderFactory.createTitledBorder(s.name()));
             final StageView view = StageView.stageView(s, updateEveryXMilliseconds);
@@ -89,9 +90,7 @@ public class SwingFlow {
     private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         final MonitorableExecutorService executorService = MonitorableExecutorService.monitorable(Executors.newSingleThreadExecutor());
-        final SwingFlow flow = new SwingFlow(sleep(executorService, 1, Option.some(sleep(executorService, 2, Option.some(sleep(executorService, 4, Option.some(sleep(executorService, 8, Option.<UntypedStage>none()))))))));
-
-        //final SwingFlow flow = new SwingFlow(Option.some(sleep(executorService, 1,Option.<UntypedStage>none())));
+        final SwingFlow flow = new SwingFlow(sleep(executorService, 1, Option.some(sleep(executorService, 2, Option.some(sleep(executorService, 4, Option.some(sleep(executorService, 8, Option.<Stage>none()))))))));
 
         final JFrame frame = new JFrame();
         frame.add(flow.view(500));
@@ -120,7 +119,7 @@ public class SwingFlow {
         }
     }
 
-    private static UntypedStage sleep(final MonitorableExecutorService executorService, final int seconds, Option<UntypedStage> next) {
+    private static Stage sleep(final MonitorableExecutorService executorService, final int seconds, Option<Stage> next) {
         final Monitorable<Progress> command = new Monitorable<Progress>() {
             @Override
             public Progress call() throws Exception {
@@ -136,14 +135,7 @@ public class SwingFlow {
             }
         };
 
-        return new Stage(executorService, "sleep(" + seconds + ")", command, mapToString(Arrays.asList(SleepMessages.values())), next);
+        return Stage.stage(executorService, "sleep(" + seconds + ")", command, Arrays.asList(SleepMessages.values()), next);
 
-    }
-
-    private static <T> List<String> mapToString(List<T> list) {
-        final List<String> results = new ArrayList<String>();
-        for (T t: list)
-            results.add(t.toString());
-        return results;
     }
 }

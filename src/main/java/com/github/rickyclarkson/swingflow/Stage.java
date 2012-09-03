@@ -5,19 +5,31 @@ import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
 import fj.data.Option;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public final class Stage implements UntypedStage, Iterable<UntypedStage> {
+public final class Stage implements Iterable<Stage> {
     private final MonitorableExecutorService executorService;
     private final String name;
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
     private final List<String> possibleValues;
-    private final Option<UntypedStage> next;
+    private final Option<Stage> next;
 
-    public Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final Option<UntypedStage> next) {
+    public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, final Option<Stage> next) {
+        return new Stage(executorService, name, command, mapToString(possibleValues), next);
+    }
+
+    private static <T> List<String> mapToString(List<T> list) {
+        final List<String> results = new ArrayList<String>();
+        for (T t: list)
+            results.add(t.toString());
+        return results;
+    }
+
+    private Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final Option<Stage> next) {
         this.executorService = executorService;
         this.name = name;
         this.command = new Monitorable<Progress>(command.updates) {
@@ -38,7 +50,7 @@ public final class Stage implements UntypedStage, Iterable<UntypedStage> {
 
                     @Override
                     public void _case(Progress.Complete x) {
-                        for (UntypedStage n: next)
+                        for (Stage n: next)
                             n.start();
                     }
 
@@ -53,13 +65,11 @@ public final class Stage implements UntypedStage, Iterable<UntypedStage> {
         this.next = next;
     }
 
-    @Override
     public List<String> possibleValues() {
         return possibleValues;
     }
 
-    @Override
-    public Option<UntypedStage> next() {
+    public Option<Stage> next() {
         return next;
     }
 
@@ -76,16 +86,16 @@ public final class Stage implements UntypedStage, Iterable<UntypedStage> {
     }
 
     @Override
-    public Iterator<UntypedStage> iterator() {
-        return new Iterator<UntypedStage>() {
-            UntypedStage current = null;
+    public Iterator<Stage> iterator() {
+        return new Iterator<Stage>() {
+            Stage current = null;
             @Override
             public boolean hasNext() {
                 return current == null || current.next().isSome();
             }
 
             @Override
-            public UntypedStage next() {
+            public Stage next() {
                 if (current == null) {
                     current = Stage.this;
                     return current;
