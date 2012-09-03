@@ -24,13 +24,13 @@ public class StageView {
         this.retryButton = retryButton;
     }
 
-    public static <T> StageView stageView(final Stage<T> stage, int updateEveryXMilliseconds) {
+    public static StageView stageView(final UntypedStage stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
         String longest = "";
-        for (T t: stage.possibleValues)
-            longest = longest.length() > t.toString().length() ? longest : t.toString();
+        for (String s: stage.possibleValues())
+            longest = longest.length() > s.length() ? longest : s;
         bar.setString(longest + "wwww");
         bar.setPreferredSize(bar.getPreferredSize());
         bar.setString("");
@@ -40,35 +40,35 @@ public class StageView {
         final Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (MonitorableFuture<Progress<T>> future: stage.future()) {
-                    final Progress<T> result = future.updates().poll();
+                for (MonitorableFuture<Progress> future: stage.future()) {
+                    final Progress result = future.updates().poll();
                     if (result == null)
                         return;
 
-                    result._switch(new Progress.SwitchBlock<T>() {
+                    result._switch(new Progress.SwitchBlock() {
                         @Override
-                        public void _case(Progress.InProgress<T> x) {
+                        public void _case(Progress.InProgress x) {
                             displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
 
                         @Override
-                        public void _case(Progress.Complete<T> x) {
+                        public void _case(Progress.Complete x) {
                             displayProgress(100, 100, x.brief, x.detail);
                         }
 
                         @Override
-                        public void _case(Progress.Failed<T> x) {
+                        public void _case(Progress.Failed x) {
                             displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
                     });
                 }
             }
 
-            private void displayProgress(int numerator, int denominator, T brief, String detail) {
+            private void displayProgress(int numerator, int denominator, String brief, String detail) {
                 bar.setValue(numerator * 100 / denominator);
-                if (!stage.possibleValues.contains(brief))
+                if (!stage.possibleValues().contains(brief))
                     throw new IllegalArgumentException("The argument [" + brief + "] was provided but is not in the list of possible values for stage " + stage.name());
-                bar.setString(brief.toString());
+                bar.setString(brief);
                 details.setDetails(detail);
             }
         });
