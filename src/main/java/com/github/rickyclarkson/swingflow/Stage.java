@@ -16,7 +16,7 @@ public final class Stage implements Iterable<Stage> {
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
     private final List<String> possibleValues;
-    private final Option<Stage> next;
+    public Option<Stage> next;
 
     public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
@@ -78,10 +78,6 @@ public final class Stage implements Iterable<Stage> {
         return possibleValues;
     }
 
-    public Option<Stage> next() {
-        return next;
-    }
-
     public void start() {
         future = Option.some(executorService.submit(command));
     }
@@ -100,7 +96,7 @@ public final class Stage implements Iterable<Stage> {
             Stage current = null;
             @Override
             public boolean hasNext() {
-                return current == null || current.next().isSome();
+                return current == null || current.next.isSome();
             }
 
             @Override
@@ -110,7 +106,7 @@ public final class Stage implements Iterable<Stage> {
                     return current;
                 }
 
-                return current = current.next().some();
+                return current = current.next.some();
             }
 
             @Override
