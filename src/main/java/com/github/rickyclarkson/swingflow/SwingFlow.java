@@ -8,7 +8,6 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
@@ -43,6 +42,7 @@ public class SwingFlow {
             invisibleBar.setFloatable(false);
             invisibleBar.add(view.detailsButton);
             invisibleBar.add(view.cancelButton);
+            invisibleBar.add(view.retryButton);
             titlePanel.add(invisibleBar);
             panel.add(titlePanel);
         }

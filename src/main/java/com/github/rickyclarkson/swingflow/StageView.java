@@ -1,5 +1,6 @@
 package com.github.rickyclarkson.swingflow;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JProgressBar;
 import java.awt.event.ActionEvent;
@@ -10,11 +11,13 @@ public class StageView {
     public final JProgressBar progressBar;
     public final DetailsButton detailsButton;
     public final JButton cancelButton;
+    public final JButton retryButton;
 
-    private StageView(JProgressBar progressBar, DetailsButton detailsButton, JButton cancelButton) {
+    private StageView(JProgressBar progressBar, DetailsButton detailsButton, JButton cancelButton, JButton retryButton) {
         this.progressBar = progressBar;
         this.detailsButton = detailsButton;
         this.cancelButton = cancelButton;
+        this.retryButton = retryButton;
     }
 
     public static <T> StageView stageView(final Stage<T> stage) {
@@ -60,13 +63,21 @@ public class StageView {
             }
         });
 
-        final JButton cancelButton = new JButton("Cancel");
+        final JButton cancelButton = new JButton(new ImageIcon(StageView.class.getResource("stop.png")));
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 stage.cancel(true);
             }
         });
-        return new StageView(bar, details, cancelButton);
+
+        final JButton retryButton = new JButton(new ImageIcon(StageView.class.getResource("rerun.png")));
+        retryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                throw null;
+            }
+        });
+        return new StageView(bar, details, cancelButton, retryButton);
     }
 }
