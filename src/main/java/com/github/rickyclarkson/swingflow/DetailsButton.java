@@ -27,10 +27,7 @@ public class DetailsButton extends JButton {
     private final JTextArea popup = new JTextArea(5, 20);
 
     public DetailsButton() {
-        super("[..]");
-        setOpaque(false);
-        setBorder(BorderFactory.createEmptyBorder());
-        setBorderPainted(false);
+        super("...");
         addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
