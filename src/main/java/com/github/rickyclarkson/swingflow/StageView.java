@@ -10,6 +10,7 @@ import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.concurrent.Future;
 
 public class StageView {
@@ -95,7 +96,18 @@ public class StageView {
                 if (!stage.future().some().isDone())
                     throw null;
 
-                stage.rerun();
+                final Option<List<Stage>> problemStages = stage.rerun();
+                for (List<Stage> stages: problemStages) {
+                    final StringBuilder builder = new StringBuilder();
+
+                    for (Stage stage: stages)
+                        builder.append(stage.name()).append(", ");
+
+                    if (builder.length() != 0)
+                        builder.setLength(builder.length() - ", ".length());
+
+                    JOptionPane.showMessageDialog(retryButton, "Cannot run " + stage.name() + " without a successful run of " + builder);
+                }
             }
         });
 

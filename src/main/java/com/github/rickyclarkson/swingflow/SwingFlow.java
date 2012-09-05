@@ -2,7 +2,6 @@ package com.github.rickyclarkson.swingflow;
 
 import com.github.rickyclarkson.monitorablefutures.Monitorable;
 import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
-import fj.F;
 import fj.data.Option;
 import net.miginfocom.layout.AC;
 import net.miginfocom.layout.LC;
@@ -25,7 +24,6 @@ import java.util.concurrent.Executors;
 
 import static com.github.rickyclarkson.swingflow.Progress._Complete;
 import static com.github.rickyclarkson.swingflow.Progress._InProgress;
-import static com.github.rickyclarkson.swingflow.Stage.stage;
 
 public class SwingFlow {
     private final Stage stage;
@@ -101,7 +99,8 @@ public class SwingFlow {
     }
 
     public void start() {
-        stage.start();
+        for (List<Stage> problemStages: stage.start())
+            throw new IllegalStateException("Stage " + stage.name() + " could not start because of " + problemStages);
     }
 
     private enum SleepMessages {

@@ -8,7 +8,9 @@ import fj.data.Option;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public final class Stage implements Iterable<Stage> {
     private final MonitorableExecutorService executorService;
@@ -17,6 +19,7 @@ public final class Stage implements Iterable<Stage> {
     private Option<MonitorableFuture<Progress>> future = Option.none();
     private final List<String> possibleValues;
     public Option<Stage> next;
+    private final List<Stage> prereqs = new ArrayList<Stage>();
 
     public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
@@ -60,7 +63,8 @@ public final class Stage implements Iterable<Stage> {
                     @Override
                     public void _case(Progress.Complete x) {
                         for (Stage n: Stage.this.next)
-                            n.start();
+                            for (List<Stage> problemStages: n.start())
+                                throw new IllegalStateException("Failed to start " + n.name() + " because of " + problemStages);
                     }
 
                     @Override
@@ -78,8 +82,28 @@ public final class Stage implements Iterable<Stage> {
         return possibleValues;
     }
 
-    public void start() {
+    public Option<List<Stage>> start() {
+        final List<Stage> problemStages = new ArrayList<Stage>();
+        for (Stage stage: prereqs) {
+            if (stage.future.isNone())
+                problemStages.add(stage);
+
+            try {
+                stage.future.some().get(0, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e); // An interrupt on a 0-wait call would seem to be a bug.
+            } catch (ExecutionException e) {
+                problemStages.add(stage); // Looks like a prerequisite failed.
+            } catch (TimeoutException e) {
+                problemStages.add(stage); // Looks like a prerequisite is still running.
+            }
+        }
+
+        if (!problemStages.isEmpty())
+            return Option.some(problemStages);
+
         future = Option.some(executorService.submit(command));
+        return Option.none();
     }
 
     public String name() {
@@ -116,8 +140,8 @@ public final class Stage implements Iterable<Stage> {
         };
     }
 
-    public void rerun() {
+    public Option<List<Stage>> rerun() {
         future = Option.none();
-        start();
+        return start();
     }
 }
