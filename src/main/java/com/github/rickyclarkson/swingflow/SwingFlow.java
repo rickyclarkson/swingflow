@@ -88,7 +88,16 @@ public class SwingFlow {
     private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         final MonitorableExecutorService executorService = MonitorableExecutorService.monitorable(Executors.newSingleThreadExecutor());
-        final SwingFlow flow = new SwingFlow(sleep(executorService, 1, Option.some(sleep(executorService, 2, Option.some(sleep(executorService, 4, Option.some(sleep(executorService, 8, Option.<Stage>none()))))))));
+        final Stage sleep8 = sleep(executorService, 8, Option.<Stage>none());
+        final Stage sleep4 = sleep(executorService, 4, Option.some(sleep8));
+        final Stage sleep2 = sleep(executorService, 2, Option.some(sleep4));
+        final Stage sleep1 = sleep(executorService, 1, Option.some(sleep2));
+
+        sleep2.addPrerequisite(sleep1);
+        sleep4.addPrerequisite(sleep2);
+        sleep8.addPrerequisite(sleep4);
+
+        final SwingFlow flow = new SwingFlow(sleep1);
 
         final JFrame frame = new JFrame();
         frame.add(flow.view(500));

@@ -11,7 +11,6 @@ import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.concurrent.Future;
 
 public class StageView {
     public final JProgressBar progressBar;
@@ -93,8 +92,10 @@ public class StageView {
         retryButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!stage.future().some().isDone())
-                    throw null;
+                if (stage.future().isNone() || !stage.future().some().isDone()) {
+                    JOptionPane.showMessageDialog(retryButton, "The stage " + stage.name() + " cannot be rerun until it has been executed at least once.");
+                    return;
+                }
 
                 final Option<List<Stage>> problemStages = stage.rerun();
                 for (List<Stage> stages: problemStages) {

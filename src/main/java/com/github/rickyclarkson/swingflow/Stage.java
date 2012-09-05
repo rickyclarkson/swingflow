@@ -35,7 +35,7 @@ public final class Stage implements Iterable<Stage> {
         return results;
     }
 
-    private Stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
+    private Stage(final MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
         this.executorService = executorService;
         this.name = name;
         this.command = new Monitorable<Progress>(command.updates) {
@@ -62,9 +62,15 @@ public final class Stage implements Iterable<Stage> {
 
                     @Override
                     public void _case(Progress.Complete x) {
-                        for (Stage n: Stage.this.next)
-                            for (List<Stage> problemStages: n.start())
-                                throw new IllegalStateException("Failed to start " + n.name() + " because of " + problemStages);
+                        for (final Stage n: Stage.this.next)
+                            executorService.submit(new Monitorable<Void>() {
+                                @Override
+                                public Void call() throws Exception {
+                                    for (List<Stage> problemStages: n.start())
+                                        throw new IllegalStateException("Failed to start " + n.name() + " because of " + problemStages);
+                                    return null;
+                                }
+                            });
                     }
 
                     @Override
@@ -91,10 +97,13 @@ public final class Stage implements Iterable<Stage> {
             try {
                 stage.future.some().get(0, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e); // An interrupt on a 0-wait call would seem to be a bug.
+                e.printStackTrace();
+                throw new RuntimeException(e);
             } catch (ExecutionException e) {
+                e.printStackTrace();
                 problemStages.add(stage); // Looks like a prerequisite failed.
             } catch (TimeoutException e) {
+                e.printStackTrace();
                 problemStages.add(stage); // Looks like a prerequisite is still running.
             }
         }
@@ -143,5 +152,9 @@ public final class Stage implements Iterable<Stage> {
     public Option<List<Stage>> rerun() {
         future = Option.none();
         return start();
+    }
+
+    public void addPrerequisite(Stage prerequisite) {
+        prereqs.add(prerequisite);
     }
 }
