@@ -17,6 +17,7 @@ import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,7 @@ public class SwingFlow {
             throw new IllegalStateException("Must be called on the event dispatch thread.");
 
         final List<Timer> timersToCancel = new ArrayList<Timer>();
-        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(1).fillY(), new AC(), new AC())) {
+        final JPanel panel = new JPanel(new MigLayout(new LC().wrapAfter(1).fill(), new AC().fill(), new AC())) {
             @Override
             public void removeNotify() {
                 for (Timer timer: timersToCancel)
@@ -48,17 +49,17 @@ public class SwingFlow {
         };
 
         for (Stage s: stage) {
-            final JPanel titlePanel = new JPanel();
+            final JPanel titlePanel = new JPanel(new BorderLayout());
             titlePanel.setBorder(BorderFactory.createTitledBorder(s.name()));
             final StageView view = StageView.stageView(s, updateEveryXMilliseconds);
             timersToCancel.add(view.timer);
-            titlePanel.add(view.progressBar);
+            titlePanel.add(view.progressBar, BorderLayout.CENTER);
             final JToolBar invisibleBar = new JToolBar();
             invisibleBar.setFloatable(false);
             invisibleBar.add(view.detailsButton);
             invisibleBar.add(view.cancelButton);
             invisibleBar.add(view.retryButton);
-            titlePanel.add(invisibleBar);
+            titlePanel.add(invisibleBar, BorderLayout.EAST);
             panel.add(titlePanel);
         }
 
@@ -88,10 +89,10 @@ public class SwingFlow {
     private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         final MonitorableExecutorService executorService = MonitorableExecutorService.monitorable(Executors.newSingleThreadExecutor());
-        final Stage sleep8 = sleep(executorService, 8, Option.<Stage>none());
-        final Stage sleep4 = sleep(executorService, 4, Option.some(sleep8));
-        final Stage sleep2 = sleep(executorService, 2, Option.some(sleep4));
-        final Stage sleep1 = sleep(executorService, 1, Option.some(sleep2));
+        final Stage sleep8 = sleep(executorService, "Short", "Really long silly name", 8, Option.<Stage>none());
+        final Stage sleep4 = sleep(executorService, "Very very very very long", "Short name", 4, Option.some(sleep8));
+        final Stage sleep2 = sleep(executorService, "", "Tiny", 2, Option.some(sleep4));
+        final Stage sleep1 = sleep(executorService, "sdfkjsdflkjsdfljsdf", "Kind of medium name", 1, Option.some(sleep2));
 
         sleep2.addPrerequisite(sleep1);
         sleep4.addPrerequisite(sleep2);
@@ -128,7 +129,7 @@ public class SwingFlow {
         }
     }
 
-    private static Stage sleep(final MonitorableExecutorService executorService, final int seconds, Option<Stage> next) {
+    private static Stage sleep(final MonitorableExecutorService executorService, final String extra, final String name, final int seconds, Option<Stage> next) {
         final Monitorable<Progress> command = new Monitorable<Progress>() {
             @Override
             public Progress call() throws Exception {
@@ -144,7 +145,7 @@ public class SwingFlow {
             }
         };
 
-        return Stage.stage(executorService, "sleep(" + seconds + ")", command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
+        return Stage.stage(executorService, name, command, Arrays.asList(extra, SleepMessages.COMPLETE.toString(), SleepMessages.INTERRUPTED.toString(), SleepMessages.SLEEPING.toString()), SleepMessages.INTERRUPTED.toString(), next);
 
     }
 }
