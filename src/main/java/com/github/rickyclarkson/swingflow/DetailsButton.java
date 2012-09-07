@@ -12,12 +12,14 @@ import javax.swing.JWindow;
 import javax.swing.border.Border;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.LayoutManager;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -33,7 +35,7 @@ public class DetailsButton extends JButton {
         addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final JWindow window = new JWindow();
+                final JWindow window = new JWindow(getOwner());
 
                 final Border border = BorderFactory.createLineBorder(Color.black);
                 popup.setBorder(border);
@@ -65,6 +67,15 @@ public class DetailsButton extends JButton {
                 window.setVisible(true);
             }
         });
+    }
+
+    private Window getOwner() {
+        Component current = getParent();
+
+        while (!(current instanceof Window))
+            current = current.getParent();
+
+        return (Window)current;
     }
 
     private JPanel gradientPanel(LayoutManager layout) {
