@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class Stage implements Iterable<Stage> {
-    private final MonitorableExecutorService executorService;
     public final String name;
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
@@ -21,11 +20,11 @@ public final class Stage implements Iterable<Stage> {
     public final Option<Stage> next;
     private final List<Stage> prereqs = new ArrayList<Stage>();
 
-    public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+    public static <T> Stage stage(String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
-        return new Stage(executorService, name, command, mapToString(possibleValues), onException.toString(), next);
+        return new Stage(name, command, mapToString(possibleValues), onException.toString(), next);
     }
 
     private static <T> List<String> mapToString(List<T> list) {
@@ -35,23 +34,26 @@ public final class Stage implements Iterable<Stage> {
         return results;
     }
 
-    private Stage(final MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
-        this.executorService = executorService;
+    private Stage(String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
         this.name = name;
         this.command = new Monitorable<Progress>(command.updates) {
             @Override
-            public Progress call() throws Exception {
+            public Progress call(final MonitorableExecutorService executorService) {
                 Progress result;
                 try {
-                    result = command.call();
+                    result = command.call(executorService);
                 } catch (Exception e) {
                     e.printStackTrace();
                     result = Progress._Failed(0, 100, onException, e.getMessage());
                 }
-                if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
-                    final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
-                    exception.printStackTrace();
-                    throw exception;
+                try {
+                    if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
+                        final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
+                        exception.printStackTrace();
+                        throw exception;
+                    }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
 
                 result._switch(new Progress.SwitchBlock() {
@@ -65,8 +67,8 @@ public final class Stage implements Iterable<Stage> {
                         for (final Stage n: Stage.this.next)
                             executorService.submit(new Monitorable<Void>() {
                                 @Override
-                                public Void call() throws Exception {
-                                    for (List<Stage> problemStages: n.start())
+                                public Void call(MonitorableExecutorService executorService) {
+                                    for (List<Stage> problemStages: n.start(executorService))
                                         throw new IllegalStateException("Failed to start " + n.name + " because of " + problemStages);
                                     return null;
                                 }
@@ -88,7 +90,7 @@ public final class Stage implements Iterable<Stage> {
         return possibleValues;
     }
 
-    public Option<List<Stage>> start() {
+    public Option<List<Stage>> start(MonitorableExecutorService executorService) {
         final List<Stage> problemStages = new ArrayList<Stage>();
         for (Stage stage: prereqs) {
             if (stage.future.isNone())
@@ -145,9 +147,9 @@ public final class Stage implements Iterable<Stage> {
         };
     }
 
-    public Option<List<Stage>> rerun() {
+    public Option<List<Stage>> rerun(MonitorableExecutorService executorService) {
         future = Option.none();
-        return start();
+        return start(executorService);
     }
 
     public void addPrerequisite(Stage prerequisite) {

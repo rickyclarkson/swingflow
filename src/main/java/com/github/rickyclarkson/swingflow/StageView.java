@@ -1,5 +1,6 @@
 package com.github.rickyclarkson.swingflow;
 
+import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
 import fj.data.Option;
 
@@ -27,7 +28,7 @@ public class StageView {
         this.retryButton = retryButton;
     }
 
-    public static StageView stageView(final Stage stage, int updateEveryXMilliseconds) {
+    public static StageView stageView(final MonitorableExecutorService executorService, final Stage stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
@@ -97,7 +98,7 @@ public class StageView {
                     return;
                 }
 
-                final Option<List<Stage>> problemStages = stage.rerun();
+                final Option<List<Stage>> problemStages = stage.rerun(executorService);
                 for (List<Stage> stages: problemStages) {
                     final StringBuilder builder = new StringBuilder();
 

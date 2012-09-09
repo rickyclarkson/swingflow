@@ -28,8 +28,10 @@ import static com.github.rickyclarkson.swingflow.Progress._InProgress;
 
 public class SwingFlow {
     private final Stage stage;
+    private final MonitorableExecutorService executorService;
 
-    public SwingFlow(Stage stage) {
+    public SwingFlow(MonitorableExecutorService executorService, Stage stage) {
+        this.executorService = executorService;
         this.stage = stage;
     }
 
@@ -51,7 +53,7 @@ public class SwingFlow {
         for (Stage s: stage) {
             final JPanel titlePanel = new JPanel(new BorderLayout());
             titlePanel.setBorder(BorderFactory.createTitledBorder(s.name));
-            final StageView view = StageView.stageView(s, updateEveryXMilliseconds);
+            final StageView view = StageView.stageView(executorService, s, updateEveryXMilliseconds);
             timersToCancel.add(view.timer);
             titlePanel.add(view.progressBar, BorderLayout.CENTER);
             final JToolBar invisibleBar = new JToolBar();
@@ -88,17 +90,16 @@ public class SwingFlow {
     @EDT
     private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        final MonitorableExecutorService executorService = MonitorableExecutorService.monitorable(Executors.newSingleThreadExecutor());
-        final Stage sleep8 = sleep(executorService, "Short", "Really long silly name", 8, Option.<Stage>none());
-        final Stage sleep4 = sleep(executorService, "Very very very very long", "Short name", 4, Option.some(sleep8));
-        final Stage sleep2 = sleep(executorService, "", "Tiny", 2, Option.some(sleep4));
-        final Stage sleep1 = sleep(executorService, "sdfkjsdflkjsdfljsdf", "Kind of medium name", 1, Option.some(sleep2));
+        final Stage sleep8 = sleep("Short", "Really long silly name", 8, Option.<Stage>none());
+        final Stage sleep4 = sleep("Very very very very long", "Short name", 4, Option.some(sleep8));
+        final Stage sleep2 = sleep("", "Tiny", 2, Option.some(sleep4));
+        final Stage sleep1 = sleep("sdfkjsdflkjsdfljsdf", "Kind of medium name", 1, Option.some(sleep2));
 
         sleep2.addPrerequisite(sleep1);
         sleep4.addPrerequisite(sleep2);
         sleep8.addPrerequisite(sleep4);
 
-        final SwingFlow flow = new SwingFlow(sleep1);
+        final SwingFlow flow = new SwingFlow(MonitorableExecutorService.monitorable(Executors.newSingleThreadExecutor()), sleep1);
 
         final JFrame frame = new JFrame();
         frame.add(flow.view(500));
@@ -109,7 +110,7 @@ public class SwingFlow {
     }
 
     public void start() {
-        for (List<Stage> problemStages: stage.start())
+        for (List<Stage> problemStages: stage.start(executorService))
             throw new IllegalStateException("Stage " + stage.name + " could not start because of " + problemStages);
     }
 
@@ -129,10 +130,10 @@ public class SwingFlow {
         }
     }
 
-    private static Stage sleep(final MonitorableExecutorService executorService, final String extra, final String name, final int seconds, Option<Stage> next) {
+    private static Stage sleep(final String extra, final String name, final int seconds, Option<Stage> next) {
         final Monitorable<Progress> command = new Monitorable<Progress>() {
             @Override
-            public Progress call() throws Exception {
+            public Progress call(MonitorableExecutorService executorService) {
                 for (int a = 0; a < seconds; a++) {
                     try {
                         Thread.sleep(1000);
@@ -145,7 +146,7 @@ public class SwingFlow {
             }
         };
 
-        return Stage.stage(executorService, name, command, Arrays.asList(extra, SleepMessages.COMPLETE.toString(), SleepMessages.INTERRUPTED.toString(), SleepMessages.SLEEPING.toString()), SleepMessages.INTERRUPTED.toString(), next);
+        return Stage.stage(name, command, Arrays.asList(extra, SleepMessages.COMPLETE.toString(), SleepMessages.INTERRUPTED.toString(), SleepMessages.SLEEPING.toString()), SleepMessages.INTERRUPTED.toString(), next);
 
     }
 }
