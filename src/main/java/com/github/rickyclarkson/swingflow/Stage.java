@@ -14,7 +14,7 @@ import java.util.concurrent.TimeoutException;
 
 public final class Stage implements Iterable<Stage> {
     private final MonitorableExecutorService executorService;
-    private final String name;
+    public final String name;
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
     private final List<String> possibleValues;
@@ -67,7 +67,7 @@ public final class Stage implements Iterable<Stage> {
                                 @Override
                                 public Void call() throws Exception {
                                     for (List<Stage> problemStages: n.start())
-                                        throw new IllegalStateException("Failed to start " + n.name() + " because of " + problemStages);
+                                        throw new IllegalStateException("Failed to start " + n.name + " because of " + problemStages);
                                     return null;
                                 }
                             });
@@ -113,10 +113,6 @@ public final class Stage implements Iterable<Stage> {
 
         future = Option.some(executorService.submit(command));
         return Option.none();
-    }
-
-    public String name() {
-        return name;
     }
 
     public Option<MonitorableFuture<Progress>> future() {
