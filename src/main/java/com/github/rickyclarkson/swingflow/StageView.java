@@ -70,7 +70,7 @@ public class StageView {
             private void displayProgress(int numerator, int denominator, String brief, String detail) {
                 bar.setValue(numerator * 100 / denominator);
                 if (!stage.possibleValues().contains(brief))
-                    throw new IllegalArgumentException("The argument [" + brief + "] was provided but is not in the list of possible values for stage " + stage.name());
+                    throw new IllegalArgumentException("The argument [" + brief + "] was provided but is not in the list of possible values for stage " + stage.name);
                 bar.setString(brief);
                 details.setDetails(detail);
             }
@@ -93,7 +93,7 @@ public class StageView {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (stage.future().isNone() || !stage.future().some().isDone()) {
-                    JOptionPane.showMessageDialog(retryButton, "The stage " + stage.name() + " cannot be rerun until it has been executed at least once.");
+                    JOptionPane.showMessageDialog(retryButton, "The stage " + stage.name + " cannot be rerun until it has been executed at least once.");
                     return;
                 }
 
@@ -102,12 +102,12 @@ public class StageView {
                     final StringBuilder builder = new StringBuilder();
 
                     for (Stage stage: stages)
-                        builder.append(stage.name()).append(", ");
+                        builder.append(stage.name).append(", ");
 
                     if (builder.length() != 0)
                         builder.setLength(builder.length() - ", ".length());
 
-                    JOptionPane.showMessageDialog(retryButton, "Cannot run " + stage.name() + " without a successful run of " + builder);
+                    JOptionPane.showMessageDialog(retryButton, "Cannot run " + stage.name + " without a successful run of " + builder);
                 }
             }
         });

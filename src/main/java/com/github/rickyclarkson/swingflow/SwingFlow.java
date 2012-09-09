@@ -50,7 +50,7 @@ public class SwingFlow {
 
         for (Stage s: stage) {
             final JPanel titlePanel = new JPanel(new BorderLayout());
-            titlePanel.setBorder(BorderFactory.createTitledBorder(s.name()));
+            titlePanel.setBorder(BorderFactory.createTitledBorder(s.name));
             final StageView view = StageView.stageView(s, updateEveryXMilliseconds);
             timersToCancel.add(view.timer);
             titlePanel.add(view.progressBar, BorderLayout.CENTER);
@@ -110,7 +110,7 @@ public class SwingFlow {
 
     public void start() {
         for (List<Stage> problemStages: stage.start())
-            throw new IllegalStateException("Stage " + stage.name() + " could not start because of " + problemStages);
+            throw new IllegalStateException("Stage " + stage.name + " could not start because of " + problemStages);
     }
 
     private enum SleepMessages {

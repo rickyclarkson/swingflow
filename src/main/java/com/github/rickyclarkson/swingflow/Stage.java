@@ -18,7 +18,7 @@ public final class Stage implements Iterable<Stage> {
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
     private final List<String> possibleValues;
-    public Option<Stage> next;
+    public final Option<Stage> next;
     private final List<Stage> prereqs = new ArrayList<Stage>();
 
     public static <T> Stage stage(MonitorableExecutorService executorService, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
