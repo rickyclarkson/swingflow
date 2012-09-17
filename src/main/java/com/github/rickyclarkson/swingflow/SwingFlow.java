@@ -8,6 +8,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -60,7 +61,8 @@ public class SwingFlow {
             invisibleBar.setFloatable(false);
             invisibleBar.add(view.detailsButton);
             invisibleBar.add(view.cancelButton);
-            invisibleBar.add(view.retryButton);
+            for (JButton b: view.retryButton)
+                invisibleBar.add(b);
             titlePanel.add(invisibleBar, BorderLayout.EAST);
             panel.add(titlePanel);
         }
@@ -146,7 +148,7 @@ public class SwingFlow {
             }
         };
 
-        return Stage.stage(name, command, Arrays.asList(extra, SleepMessages.COMPLETE.toString(), SleepMessages.INTERRUPTED.toString(), SleepMessages.SLEEPING.toString()), SleepMessages.INTERRUPTED.toString(), next);
+        return Stage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(extra, SleepMessages.COMPLETE.toString(), SleepMessages.INTERRUPTED.toString(), SleepMessages.SLEEPING.toString()), SleepMessages.INTERRUPTED.toString(), next);
 
     }
 }

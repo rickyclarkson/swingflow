@@ -17,10 +17,10 @@ public class StageView {
     public final JProgressBar progressBar;
     public final DetailsButton detailsButton;
     public final JButton cancelButton;
-    public final JButton retryButton;
+    public final Option<JButton> retryButton;
     public final Timer timer;
 
-    private StageView(Timer timer, JProgressBar progressBar, DetailsButton detailsButton, JButton cancelButton, JButton retryButton) {
+    private StageView(Timer timer, JProgressBar progressBar, DetailsButton detailsButton, JButton cancelButton, Option<JButton> retryButton) {
         this.timer = timer;
         this.progressBar = progressBar;
         this.detailsButton = detailsButton;
@@ -78,6 +78,7 @@ public class StageView {
         });
 
         final JButton cancelButton = new JButton(new ImageIcon(StageView.class.getResource("stop.png")));
+        cancelButton.setToolTipText("Stop");
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -89,31 +90,37 @@ public class StageView {
             }
         });
 
-        final JButton retryButton = new JButton(new ImageIcon(StageView.class.getResource("rerun.png")));
-        retryButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (stage.future().isNone() || !stage.future().some().isDone()) {
-                    JOptionPane.showMessageDialog(retryButton, "The stage " + stage.name + " cannot be rerun until it has been executed at least once.");
-                    return;
+        Option<JButton> retryButtonOption;
+        if (stage.rerun == Rerun.ALLOWED) {
+            final JButton retryButton = new JButton(new ImageIcon(StageView.class.getResource("rerun.png")));
+            retryButton.setToolTipText("Rerun");
+            retryButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (stage.future().isNone() || !stage.future().some().isDone()) {
+                        JOptionPane.showMessageDialog(retryButton, "The stage " + stage.name + " cannot be rerun until it has been executed at least once.");
+                        return;
+                    }
+
+                    final Option<List<Stage>> problemStages = stage.rerun(executorService);
+                    for (List<Stage> stages: problemStages) {
+                        final StringBuilder builder = new StringBuilder();
+
+                        for (Stage stage: stages)
+                            builder.append(stage.name).append(", ");
+
+                        if (builder.length() != 0)
+                            builder.setLength(builder.length() - ", ".length());
+
+                        JOptionPane.showMessageDialog(retryButton, "Cannot run " + stage.name + " without a successful run of " + builder);
+                    }
                 }
-
-                final Option<List<Stage>> problemStages = stage.rerun(executorService);
-                for (List<Stage> stages: problemStages) {
-                    final StringBuilder builder = new StringBuilder();
-
-                    for (Stage stage: stages)
-                        builder.append(stage.name).append(", ");
-
-                    if (builder.length() != 0)
-                        builder.setLength(builder.length() - ", ".length());
-
-                    JOptionPane.showMessageDialog(retryButton, "Cannot run " + stage.name + " without a successful run of " + builder);
-                }
-            }
-        });
+            });
+            retryButtonOption = Option.some(retryButton);
+        } else
+            retryButtonOption = Option.none();
 
         timer.start();
-        return new StageView(timer, bar, details, cancelButton, retryButton);
+        return new StageView(timer, bar, details, cancelButton, retryButtonOption);
     }
 }

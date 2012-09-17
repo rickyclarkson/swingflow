@@ -19,12 +19,13 @@ public final class Stage implements Iterable<Stage> {
     private final List<String> possibleValues;
     public final Option<Stage> next;
     private final List<Stage> prereqs = new ArrayList<Stage>();
+    public final Rerun rerun;
 
-    public static <T> Stage stage(String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+    public static <T> Stage stage(Rerun rerun, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
-        return new Stage(name, command, mapToString(possibleValues), onException.toString(), next);
+        return new Stage(rerun, name, command, mapToString(possibleValues), onException.toString(), next);
     }
 
     private static <T> List<String> mapToString(List<T> list) {
@@ -34,7 +35,8 @@ public final class Stage implements Iterable<Stage> {
         return results;
     }
 
-    private Stage(String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
+    private Stage(Rerun rerun, String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
+        this.rerun = rerun;
         this.name = name;
         this.command = new Monitorable<Progress>(command.updates) {
             @Override
