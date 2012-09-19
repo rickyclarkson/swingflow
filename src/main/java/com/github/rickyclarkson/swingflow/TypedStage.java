@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public final class TypedStage implements Stage {
+public final class TypedStage<T> implements Stage {
     public final String name;
     private final Monitorable<Progress> command;
     private Option<MonitorableFuture<Progress>> future = Option.none();
@@ -25,7 +25,7 @@ public final class TypedStage implements Stage {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
-        return new TypedStage(rerun, name, command, mapToString(possibleValues), onException.toString(), next);
+        return new TypedStage<T>(rerun, name, command, mapToString(possibleValues), onException.toString(), next);
     }
 
     private static <T> List<String> mapToString(List<T> list) {

@@ -28,7 +28,7 @@ public class StageView {
         this.retryButton = retryButton;
     }
 
-    public static StageView stageView(final MonitorableExecutorService executorService, final TypedStage stage, int updateEveryXMilliseconds) {
+    public static <T> StageView stageView(final MonitorableExecutorService executorService, final TypedStage<T> stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
