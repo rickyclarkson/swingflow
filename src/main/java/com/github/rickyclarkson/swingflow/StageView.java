@@ -28,7 +28,7 @@ public class StageView {
         this.retryButton = retryButton;
     }
 
-    public static StageView stageView(final MonitorableExecutorService executorService, final Stage stage, int updateEveryXMilliseconds) {
+    public static StageView stageView(final MonitorableExecutorService executorService, final TypedStage stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
@@ -107,7 +107,7 @@ public class StageView {
                         final StringBuilder builder = new StringBuilder();
 
                         for (Stage stage: stages)
-                            builder.append(stage.name).append(", ");
+                            builder.append(stage.name()).append(", ");
 
                         if (builder.length() != 0)
                             builder.setLength(builder.length() - ", ".length());

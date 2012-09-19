@@ -53,8 +53,8 @@ public class SwingFlow {
 
         for (Stage s: stage) {
             final JPanel titlePanel = new JPanel(new BorderLayout());
-            titlePanel.setBorder(BorderFactory.createTitledBorder(s.name));
-            final StageView view = StageView.stageView(executorService, s, updateEveryXMilliseconds);
+            titlePanel.setBorder(BorderFactory.createTitledBorder(s.name()));
+            final StageView view = s.view(executorService, updateEveryXMilliseconds);
             timersToCancel.add(view.timer);
             titlePanel.add(view.progressBar, BorderLayout.CENTER);
             final JToolBar invisibleBar = new JToolBar();
@@ -113,7 +113,7 @@ public class SwingFlow {
 
     public void start() {
         for (List<Stage> problemStages: stage.start(executorService))
-            throw new IllegalStateException("Stage " + stage.name + " could not start because of " + problemStages);
+            throw new IllegalStateException("Stage " + stage.name() + " could not start because of " + problemStages);
     }
 
     private enum SleepMessages {
@@ -148,6 +148,6 @@ public class SwingFlow {
             }
         };
 
-        return Stage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
+        return TypedStage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
     }
 }
