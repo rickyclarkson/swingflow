@@ -14,34 +14,27 @@ import java.util.concurrent.TimeoutException;
 
 public final class TypedStage<T> implements Stage {
     public final String name;
-    private final Monitorable<Progress> command;
-    private Option<MonitorableFuture<Progress>> future = Option.none();
-    private final List<String> possibleValues;
+    private final Monitorable<Progress<T>> command;
+    private Option<MonitorableFuture<Progress<T>>> future = Option.none();
+    private final List<T> possibleValues;
     public final Option<Stage> next;
     private final List<Stage> prereqs = new ArrayList<Stage>();
     public final Rerun rerun;
 
-    public static <T extends Enum<T>> Stage stage(Rerun rerun, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+    public static <T extends Enum<T>> Stage stage(Rerun rerun, String name, final Monitorable<Progress<T>> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
-        return new TypedStage<T>(rerun, name, command, mapToString(possibleValues), onException.toString(), next);
+        return new TypedStage<T>(rerun, name, command, possibleValues, onException, next);
     }
 
-    private static <T> List<String> mapToString(List<T> list) {
-        final List<String> results = new ArrayList<String>();
-        for (T t: list)
-            results.add(t.toString());
-        return results;
-    }
-
-    private TypedStage(Rerun rerun, String name, final Monitorable<Progress> command, List<String> possibleValues, final String onException, final Option<Stage> next) {
+    private TypedStage(Rerun rerun, String name, final Monitorable<Progress<T>> command, List<T> possibleValues, final T onException, final Option<Stage> next) {
         this.rerun = rerun;
         this.name = name;
-        this.command = new Monitorable<Progress>(command.updates) {
+        this.command = new Monitorable<Progress<T>>(command.updates) {
             @Override
-            public Progress call(final MonitorableExecutorService executorService) {
-                Progress result;
+            public Progress<T> call(final MonitorableExecutorService executorService) {
+                Progress<T> result;
                 try {
                     result = command.call(executorService);
                 } catch (Exception e) {
@@ -58,14 +51,14 @@ public final class TypedStage<T> implements Stage {
                     throw new RuntimeException(e);
                 }
 
-                result._switch(new Progress.SwitchBlock() {
+                result._switch(new Progress.SwitchBlock<T>() {
                     @Override
-                    public void _case(Progress.InProgress x) {
+                    public void _case(Progress.InProgress<T> x) {
                         throw new IllegalStateException("Should not be able to observe this state.");
                     }
 
                     @Override
-                    public void _case(Progress.Complete x) {
+                    public void _case(Progress.Complete<T> x) {
                         for (final Stage n: TypedStage.this.next)
                             executorService.submit(new Monitorable<Void>() {
                                 @Override
@@ -78,7 +71,7 @@ public final class TypedStage<T> implements Stage {
                     }
 
                     @Override
-                    public void _case(Progress.Failed x) {
+                    public void _case(Progress.Failed<T> x) {
                     }
                 });
                 return result;
@@ -88,7 +81,7 @@ public final class TypedStage<T> implements Stage {
         this.next = next;
     }
 
-    public List<String> possibleValues() {
+    public List<T> possibleValues() {
         return possibleValues;
     }
 
@@ -139,7 +132,7 @@ public final class TypedStage<T> implements Stage {
         return next;
     }
 
-    public Option<MonitorableFuture<Progress>> future() {
+    public Option<MonitorableFuture<Progress<T>>> future() {
         return future;
     }
 

@@ -33,8 +33,8 @@ public class StageView {
         bar.setValue(0);
         bar.setStringPainted(true);
         String longest = "";
-        for (String s: stage.possibleValues())
-            longest = longest.length() > s.length() ? longest : s;
+        for (T s: stage.possibleValues())
+            longest = longest.length() > s.toString().length() ? longest : s.toString();
         bar.setString(longest + "wwww");
         bar.setPreferredSize(bar.getPreferredSize());
         bar.setString("");
@@ -44,35 +44,35 @@ public class StageView {
         final Timer timer = new Timer(updateEveryXMilliseconds, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                for (MonitorableFuture<Progress> future: stage.future()) {
-                    final Progress result = future.updates().poll();
+                for (MonitorableFuture<Progress<T>> future: stage.future()) {
+                    final Progress<T> result = future.updates().poll();
                     if (result == null)
                         return;
 
-                    result._switch(new Progress.SwitchBlock() {
+                    result._switch(new Progress.SwitchBlock<T>() {
                         @Override
-                        public void _case(Progress.InProgress x) {
+                        public void _case(Progress.InProgress<T> x) {
                             displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
 
                         @Override
-                        public void _case(Progress.Complete x) {
+                        public void _case(Progress.Complete<T> x) {
                             displayProgress(100, 100, x.brief, x.detail);
                         }
 
                         @Override
-                        public void _case(Progress.Failed x) {
+                        public void _case(Progress.Failed<T> x) {
                             displayProgress(x.numerator, x.denominator, x.brief, x.detail);
                         }
                     });
                 }
             }
 
-            private void displayProgress(int numerator, int denominator, String brief, String detail) {
+            private void displayProgress(int numerator, int denominator, T brief, String detail) {
                 bar.setValue(numerator * 100 / denominator);
                 if (!stage.possibleValues().contains(brief))
                     throw new IllegalArgumentException("The argument [" + brief + "] was provided but is not in the list of possible values for stage " + stage.name);
-                bar.setString(brief);
+                bar.setString(brief.toString());
                 details.setDetails(detail);
             }
         });
@@ -82,7 +82,7 @@ public class StageView {
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final Option<MonitorableFuture<Progress>> futureOption = stage.future();
+                final Option<MonitorableFuture<Progress<T>>> futureOption = stage.future();
                 if (futureOption.isNone() || futureOption.some().isDone())
                     JOptionPane.showMessageDialog(cancelButton, "Cannot cancel a task that is not currently running.");
                 else

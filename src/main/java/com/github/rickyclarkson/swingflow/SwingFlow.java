@@ -133,18 +133,18 @@ public class SwingFlow {
     }
 
     private static Stage sleep(final String name, final int seconds, Option<Stage> next) {
-        final Monitorable<Progress> command = new Monitorable<Progress>() {
+        final Monitorable<Progress<SleepMessages>> command = new Monitorable<Progress<SleepMessages>>() {
             @Override
-            public Progress call(MonitorableExecutorService executorService) {
+            public Progress<SleepMessages> call(MonitorableExecutorService executorService) {
                 for (int a = 0; a < seconds; a++) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates.offer(_InProgress(a + 1, seconds, SleepMessages.SLEEPING.toString(), "Still sleeping, a = " + a));
+                    updates.offer(_InProgress(a + 1, seconds, SleepMessages.SLEEPING, "Still sleeping, a = " + a));
                 }
-                return _Complete(SleepMessages.COMPLETE.toString(), "All sleeping complete");
+                return _Complete(SleepMessages.COMPLETE, "All sleeping complete");
             }
         };
 
