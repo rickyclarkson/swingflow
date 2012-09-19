@@ -28,7 +28,7 @@ import static com.github.rickyclarkson.swingflow.Progress._Complete;
 import static com.github.rickyclarkson.swingflow.Progress._InProgress;
 
 public class SwingFlow {
-    private final Stage stage;
+    private final Stage<?> stage;
     private final MonitorableExecutorService executorService;
 
     public SwingFlow(MonitorableExecutorService executorService, Stage stage) {
@@ -51,7 +51,7 @@ public class SwingFlow {
             }
         };
 
-        for (Stage s: stage) {
+        for (Stage<?> s: stage) {
             final JPanel titlePanel = new JPanel(new BorderLayout());
             titlePanel.setBorder(BorderFactory.createTitledBorder(s.name));
             final StageView view = StageView.stageView(executorService, s, updateEveryXMilliseconds);
@@ -92,10 +92,16 @@ public class SwingFlow {
     @EDT
     private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        final Stage sleep8 = sleep("Really long silly name", 8, Option.<Stage>none());
-        final Stage sleep4 = sleep("Short name", 4, Option.some(sleep8));
-        final Stage sleep2 = sleep("Tiny", 2, Option.some(sleep4));
-        final Stage sleep1 = sleep("Kind of medium name", 1, Option.some(sleep2));
+        final Stage<SleepMessages> sleep8 = sleep("Really long silly name", 8, Option.<Stage<?>>none());
+
+        @SuppressWarnings("unchecked")
+        final Stage<SleepMessages> sleep4 = sleep("Short name", 4, Option.some(sleep8));
+
+        @SuppressWarnings("unchecked")
+        final Stage<SleepMessages> sleep2 = sleep("Tiny", 2, Option.some(sleep4));
+
+        @SuppressWarnings("unchecked")
+        final Stage<SleepMessages> sleep1 = sleep("Kind of medium name", 1, Option.some(sleep2));
 
         sleep2.addPrerequisite(sleep1);
         sleep4.addPrerequisite(sleep2);
@@ -112,7 +118,7 @@ public class SwingFlow {
     }
 
     public void start() {
-        for (List<Stage> problemStages: stage.start(executorService))
+        for (List<Stage<?>> problemStages: stage.start(executorService))
             throw new IllegalStateException("Stage " + stage.name + " could not start because of " + problemStages);
     }
 
@@ -132,22 +138,25 @@ public class SwingFlow {
         }
     }
 
-    private static Stage sleep(final String name, final int seconds, Option<Stage> next) {
-        final Monitorable<Progress> command = new Monitorable<Progress>() {
+    private static Stage<SleepMessages> sleep(final String name, final int seconds, Option<? extends Stage<?>> next) {
+        final Monitorable<Progress<SleepMessages>> command = new Monitorable<Progress<SleepMessages>>() {
             @Override
-            public Progress call(MonitorableExecutorService executorService) {
+            public Progress<SleepMessages> call(MonitorableExecutorService executorService) {
                 for (int a = 0; a < seconds; a++) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    updates.offer(_InProgress(a + 1, seconds, SleepMessages.SLEEPING.toString(), "Still sleeping, a = " + a));
+                    updates.offer(_InProgress(a + 1, seconds, SleepMessages.SLEEPING, "Still sleeping, a = " + a));
                 }
-                return _Complete(SleepMessages.COMPLETE.toString(), "All sleeping complete");
+                return _Complete(SleepMessages.COMPLETE, "All sleeping complete");
             }
         };
 
-        return Stage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
+        @SuppressWarnings("unchecked")
+        final Stage<SleepMessages> result = Stage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, (Option<Stage<?>>) next);
+
+        return result;
     }
 }

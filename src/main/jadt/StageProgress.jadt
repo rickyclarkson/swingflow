@@ -2,6 +2,6 @@ package com.github.rickyclarkson.swingflow
 
 import fj.data.Option
 
-Progress = InProgress(final int numerator, final int denominator, final String brief, final String detail) |
-           Complete(final String brief, final String detail) |
-           Failed(final int numerator, final int denominator, final String brief, final String detail)
+Progress<T> = InProgress(final int numerator, final int denominator, final T brief, final String detail) |
+              Complete(final T brief, final String detail) |
+              Failed(final int numerator, final int denominator, final T brief, final String detail)
