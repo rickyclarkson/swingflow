@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.github.rickyclarkson</groupId>
     <artifactId>swingflow</artifactId>
-    <version>1.14</version>
+    <version>1.15-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>swingflow</name>
     <description>A library to display and control workflows in Swing</description>
