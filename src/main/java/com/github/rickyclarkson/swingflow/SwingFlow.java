@@ -92,10 +92,10 @@ public class SwingFlow {
     @EDT
     private static void realMain() throws ClassNotFoundException, UnsupportedLookAndFeelException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        final Stage sleep8 = sleep("Short", "Really long silly name", 8, Option.<Stage>none());
-        final Stage sleep4 = sleep("Very very very very long", "Short name", 4, Option.some(sleep8));
-        final Stage sleep2 = sleep("", "Tiny", 2, Option.some(sleep4));
-        final Stage sleep1 = sleep("sdfkjsdflkjsdfljsdf", "Kind of medium name", 1, Option.some(sleep2));
+        final Stage sleep8 = sleep("Really long silly name", 8, Option.<Stage>none());
+        final Stage sleep4 = sleep("Short name", 4, Option.some(sleep8));
+        final Stage sleep2 = sleep("Tiny", 2, Option.some(sleep4));
+        final Stage sleep1 = sleep("Kind of medium name", 1, Option.some(sleep2));
 
         sleep2.addPrerequisite(sleep1);
         sleep4.addPrerequisite(sleep2);
@@ -132,7 +132,7 @@ public class SwingFlow {
         }
     }
 
-    private static Stage sleep(final String extra, final String name, final int seconds, Option<Stage> next) {
+    private static Stage sleep(final String name, final int seconds, Option<Stage> next) {
         final Monitorable<Progress> command = new Monitorable<Progress>() {
             @Override
             public Progress call(MonitorableExecutorService executorService) {
@@ -148,7 +148,6 @@ public class SwingFlow {
             }
         };
 
-        return Stage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(extra, SleepMessages.COMPLETE.toString(), SleepMessages.INTERRUPTED.toString(), SleepMessages.SLEEPING.toString()), SleepMessages.INTERRUPTED.toString(), next);
-
+        return Stage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
     }
 }

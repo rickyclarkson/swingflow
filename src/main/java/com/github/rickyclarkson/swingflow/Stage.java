@@ -21,7 +21,7 @@ public final class Stage implements Iterable<Stage> {
     private final List<Stage> prereqs = new ArrayList<Stage>();
     public final Rerun rerun;
 
-    public static <T> Stage stage(Rerun rerun, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+    public static <T extends Enum<T>> Stage stage(Rerun rerun, String name, final Monitorable<Progress> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
