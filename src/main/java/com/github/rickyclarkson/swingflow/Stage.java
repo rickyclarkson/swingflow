@@ -15,5 +15,4 @@ public interface Stage extends Iterable<Stage> {
     Option<Stage> next();
     void addPrerequisite(Stage preRequisite);
     StageView view(MonitorableExecutorService executorService, int updateEveryXMilliseconds);
-    void waitForCompletion() throws ExecutionException, InterruptedException;
 }

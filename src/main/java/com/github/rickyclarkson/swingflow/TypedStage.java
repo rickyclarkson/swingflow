@@ -21,7 +21,7 @@ public final class TypedStage<T> implements Stage {
     private final List<Stage> prereqs = new ArrayList<Stage>();
     public final Rerun rerun;
 
-    public static <T extends Enum<T>> Stage stage(Rerun rerun, String name, final Monitorable<Progress<T>> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+    public static <T extends Enum<T>> TypedStage<T> stage(Rerun rerun, String name, final Monitorable<Progress<T>> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
@@ -174,10 +174,5 @@ public final class TypedStage<T> implements Stage {
     @Override
     public StageView view(MonitorableExecutorService executorService, int updateEveryXMilliseconds) {
         return StageView.stageView(executorService, this, updateEveryXMilliseconds);
-    }
-
-    @Override
-    public void waitForCompletion() throws ExecutionException, InterruptedException {
-        future.some().get();
     }
 }
