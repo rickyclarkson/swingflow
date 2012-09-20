@@ -175,4 +175,9 @@ public final class TypedStage<T> implements Stage {
     public StageView view(MonitorableExecutorService executorService, int updateEveryXMilliseconds) {
         return StageView.stageView(executorService, this, updateEveryXMilliseconds);
     }
+
+    @Override
+    public void waitForCompletion() throws ExecutionException, InterruptedException {
+        future.some().get();
+    }
 }
