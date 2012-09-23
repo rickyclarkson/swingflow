@@ -90,7 +90,7 @@ public class StageView {
             }
         });
 
-        Option<JButton> retryButtonOption;
+        final Option<JButton> retryButtonOption;
         if (stage.rerun == Rerun.ALLOWED) {
             final JButton retryButton = new JButton(new ImageIcon(StageView.class.getResource("rerun.png")));
             retryButton.setToolTipText("Rerun");
