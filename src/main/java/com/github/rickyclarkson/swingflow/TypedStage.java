@@ -88,9 +88,6 @@ public final class TypedStage<T> implements Stage {
     public Option<List<Stage>> start(MonitorableExecutorService executorService) {
         final List<Stage> problemStages = new ArrayList<Stage>();
         for (Stage stage: prereqs) {
-            if (stage.hasFuture())
-                problemStages.add(stage);
-
             try {
                 stage.tryToGetWithoutWaiting();
             } catch (InterruptedException e) {
