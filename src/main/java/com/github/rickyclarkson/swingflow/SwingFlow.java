@@ -2,6 +2,8 @@ package com.github.rickyclarkson.swingflow;
 
 import com.github.rickyclarkson.monitorablefutures.Monitorable;
 import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
+import fj.F;
+import fj.Function;
 import fj.data.Option;
 import net.miginfocom.layout.AC;
 import net.miginfocom.layout.LC;
@@ -19,6 +21,7 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -54,7 +57,7 @@ public class SwingFlow {
         for (Stage s: stage) {
             final JPanel titlePanel = new JPanel(new BorderLayout());
             titlePanel.setBorder(BorderFactory.createTitledBorder(s.name()));
-            final StageView view = s.view(executorService, updateEveryXMilliseconds);
+            final StageView view = s.view(executorService, panel, updateEveryXMilliseconds);
             timersToCancel.add(view.timer);
             titlePanel.add(view.progressBar, BorderLayout.CENTER);
             final JToolBar invisibleBar = new JToolBar();
@@ -108,11 +111,11 @@ public class SwingFlow {
         frame.pack();
         frame.setVisible(true);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        flow.start();
+        flow.start(frame);
     }
 
-    public void start() {
-        for (List<Stage> problemStages: stage.start(executorService))
+    public void start(Component component) {
+        for (List<Stage> problemStages: stage.start(executorService, component))
             throw new IllegalStateException("Stage " + stage.name() + " could not start because of " + problemStages);
     }
 
@@ -148,6 +151,7 @@ public class SwingFlow {
             }
         };
 
-        return TypedStage.stage(Rerun.DISALLOWED, name, command, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
+        final F<Component,Monitorable<Progress<SleepMessages>>> commandFunction = Function.constant(command);
+        return TypedStage.stage(Rerun.DISALLOWED, name, commandFunction, Arrays.asList(SleepMessages.values()), SleepMessages.INTERRUPTED, next);
     }
 }

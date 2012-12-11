@@ -3,8 +3,10 @@ package com.github.rickyclarkson.swingflow;
 import com.github.rickyclarkson.monitorablefutures.Monitorable;
 import com.github.rickyclarkson.monitorablefutures.MonitorableExecutorService;
 import com.github.rickyclarkson.monitorablefutures.MonitorableFuture;
+import fj.F;
 import fj.data.Option;
 
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,67 +16,73 @@ import java.util.concurrent.TimeoutException;
 
 public final class TypedStage<T> implements Stage {
     public final String name;
-    private final Monitorable<Progress<T>> command;
+    private final F<Component, Monitorable<Progress<T>>> command;
     private Option<MonitorableFuture<Progress<T>>> future = Option.none();
     private final List<T> possibleValues;
     public final Option<Stage> next;
     private final List<Stage> prereqs = new ArrayList<Stage>();
     public final Rerun rerun;
 
-    public static <T extends Enum<T>> TypedStage<T> stage(Rerun rerun, String name, final Monitorable<Progress<T>> command, List<T> possibleValues, T onException, final Option<Stage> next) {
+    public static <T extends Enum<T>> TypedStage<T> stage(Rerun rerun, String name, final F<Component, Monitorable<Progress<T>>> command, List<T> possibleValues, T onException, final Option<Stage> next) {
         if (!possibleValues.contains(onException))
             throw new IllegalArgumentException("The onException parameter [" + onException + "] needs to be included in the list of possible values [" + possibleValues + ']');
 
         return new TypedStage<T>(rerun, name, command, possibleValues, onException, next);
     }
 
-    private TypedStage(Rerun rerun, String name, final Monitorable<Progress<T>> command, List<T> possibleValues, final T onException, final Option<Stage> next) {
+    private TypedStage(Rerun rerun, String name, final F<Component, Monitorable<Progress<T>>> commandFunction, List<T> possibleValues, final T onException, final Option<Stage> next) {
         this.rerun = rerun;
         this.name = name;
-        this.command = new Monitorable<Progress<T>>(command.updates) {
+        this.command = new F<Component, Monitorable<Progress<T>>>() {
             @Override
-            public Progress<T> call(final MonitorableExecutorService executorService) {
-                Progress<T> result;
-                try {
-                    result = command.call(executorService);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    result = Progress._Failed(0, 100, onException, e.getMessage());
-                }
-                try {
-                    if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
-                        final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
-                        exception.printStackTrace();
-                        throw exception;
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                result._switch(new Progress.SwitchBlock<T>() {
+            public Monitorable<Progress<T>> f(final Component component) {
+                final Monitorable<Progress<T>> command = commandFunction.f(component);
+                return new Monitorable<Progress<T>>(command.updates) {
                     @Override
-                    public void _case(Progress.InProgress<T> x) {
-                        throw new IllegalStateException("Should not be able to observe this state.");
-                    }
+                    public Progress<T> call(final MonitorableExecutorService executorService) {
+                        Progress<T> result;
+                        try {
+                            result = command.call(executorService);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            result = Progress._Failed(0, 100, onException, e.getMessage());
+                        }
+                        try {
+                            if (!updates.offer(result, 10, TimeUnit.SECONDS)) {
+                                final IllegalStateException exception = new IllegalStateException("Could not give " + result + " to the updates queue.");
+                                exception.printStackTrace();
+                                throw exception;
+                            }
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
 
-                    @Override
-                    public void _case(Progress.Complete<T> x) {
-                        for (final Stage n: TypedStage.this.next)
-                            executorService.submit(new Monitorable<Void>() {
-                                @Override
-                                public Void call(MonitorableExecutorService executorService) {
-                                    for (List<Stage> problemStages: n.start(executorService))
-                                        throw new IllegalStateException("Failed to start " + n.name() + " because of " + problemStages);
-                                    return null;
-                                }
-                            });
-                    }
+                        result._switch(new Progress.SwitchBlock<T>() {
+                            @Override
+                            public void _case(Progress.InProgress<T> x) {
+                                throw new IllegalStateException("Should not be able to observe this state.");
+                            }
 
-                    @Override
-                    public void _case(Progress.Failed<T> x) {
+                            @Override
+                            public void _case(Progress.Complete<T> x) {
+                                for (final Stage n: TypedStage.this.next)
+                                    executorService.submit(new Monitorable<Void>() {
+                                        @Override
+                                        public Void call(MonitorableExecutorService executorService) {
+                                            for (List<Stage> problemStages: n.start(executorService, component))
+                                                throw new IllegalStateException("Failed to start " + n.name() + " because of " + problemStages);
+                                            return null;
+                                        }
+                                    });
+                            }
+
+                            @Override
+                            public void _case(Progress.Failed<T> x) {
+                            }
+                        });
+                        return result;
                     }
-                });
-                return result;
+                };
             }
         };
         this.possibleValues = possibleValues;
@@ -85,7 +93,7 @@ public final class TypedStage<T> implements Stage {
         return possibleValues;
     }
 
-    public Option<List<Stage>> start(MonitorableExecutorService executorService) {
+    public Option<List<Stage>> start(MonitorableExecutorService executorService, Component component) {
         final List<Stage> problemStages = new ArrayList<Stage>();
         for (Stage stage: prereqs) {
             try {
@@ -105,7 +113,7 @@ public final class TypedStage<T> implements Stage {
         if (!problemStages.isEmpty())
             return Option.some(problemStages);
 
-        future = Option.some(executorService.submit(command));
+        future = Option.some(executorService.submit(command.f(component)));
         return Option.none();
     }
 
@@ -159,9 +167,9 @@ public final class TypedStage<T> implements Stage {
         };
     }
 
-    public Option<List<Stage>> rerun(MonitorableExecutorService executorService) {
+    public Option<List<Stage>> rerun(MonitorableExecutorService executorService, Component component) {
         future = Option.none();
-        return start(executorService);
+        return start(executorService, component);
     }
 
     public void addPrerequisite(Stage prerequisite) {
@@ -169,7 +177,7 @@ public final class TypedStage<T> implements Stage {
     }
 
     @Override
-    public StageView view(MonitorableExecutorService executorService, int updateEveryXMilliseconds) {
-        return StageView.stageView(executorService, this, updateEveryXMilliseconds);
+    public StageView view(MonitorableExecutorService executorService, Component component, int updateEveryXMilliseconds) {
+        return StageView.stageView(executorService, component, this, updateEveryXMilliseconds);
     }
 }

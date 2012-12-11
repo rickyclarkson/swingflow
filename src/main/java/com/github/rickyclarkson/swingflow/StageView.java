@@ -9,6 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.Timer;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -28,7 +29,7 @@ public class StageView {
         this.retryButton = retryButton;
     }
 
-    public static <T> StageView stageView(final MonitorableExecutorService executorService, final TypedStage<T> stage, int updateEveryXMilliseconds) {
+    public static <T> StageView stageView(final MonitorableExecutorService executorService, final Component component, final TypedStage<T> stage, int updateEveryXMilliseconds) {
         final JProgressBar bar = new JProgressBar(0, 100);
         bar.setValue(0);
         bar.setStringPainted(true);
@@ -102,7 +103,7 @@ public class StageView {
                         return;
                     }
 
-                    final Option<List<Stage>> problemStages = stage.rerun(executorService);
+                    final Option<List<Stage>> problemStages = stage.rerun(executorService, component);
                     for (List<Stage> stages: problemStages) {
                         final StringBuilder builder = new StringBuilder();
 
